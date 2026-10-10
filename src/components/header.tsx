@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Heart, User } from "lucide-react";
 import { Logo } from "./logo";
 import { CartButton, MobileMenu, SearchBox } from "./header-client";
@@ -29,10 +30,12 @@ export async function Header() {
       <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur">
         <div className="container-x grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="flex items-center gap-2">
-            <MobileMenu links={navLinks} signedIn={!!user} isAdmin={user?.role === "ADMIN"} />
-            <nav className="hidden items-center gap-6 lg:flex" aria-label="Main">
+            <Suspense fallback={<span className="-ml-2 h-9 w-9 xl:hidden" />}>
+              <MobileMenu links={navLinks} signedIn={!!user} isAdmin={user?.role === "ADMIN"} logo={<Logo />} />
+            </Suspense>
+            <nav className="hidden items-center gap-6 xl:flex" aria-label="Main">
               {navLinks.map((l) => (
-                <Link key={l.href} href={l.href} className="text-[14px] text-ink/80 transition hover:text-ink">
+                <Link key={l.href} href={l.href} className="whitespace-nowrap text-[14px] text-ink/80 transition hover:text-ink">
                   {l.label}
                 </Link>
               ))}

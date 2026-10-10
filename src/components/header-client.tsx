@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import clsx from "clsx";
+import { ChevronRight, Heart, HelpCircle, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Drawer } from "./drawer";
 import { useCart } from "@/store/cart";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -29,7 +32,11 @@ export function SearchBox() {
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) input.current?.focus();
+    if (!open) return;
+    input.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   function submit(e: React.FormEvent) {
@@ -54,24 +61,30 @@ export function SearchBox() {
       <button onClick={() => setOpen(true)} aria-label="Search" className="rounded-full p-2 hover:bg-tile xl:hidden">
         <Search className="h-5 w-5" strokeWidth={1.6} />
       </button>
-      {open && (
-        <div className="fixed inset-x-0 top-0 z-50 border-b border-line bg-white p-4 shadow-lg">
-          <form onSubmit={submit} className="mx-auto flex max-w-2xl items-center gap-3" role="search">
-            <Search className="h-5 w-5 text-muted" />
-            <input
-              ref={input}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by team, season or kit…"
-              aria-label="Search jerseys"
-              className="flex-1 bg-transparent py-2 text-base outline-none"
-            />
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close search" className="p-2">
-              <X className="h-5 w-5" />
-            </button>
-          </form>
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Search">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+            <div className="relative border-b border-line bg-white px-4 py-3 shadow-lg">
+              <form onSubmit={submit} className="mx-auto flex max-w-2xl items-center gap-3" role="search">
+                <Search className="h-5 w-5 shrink-0 text-muted" />
+                <input
+                  ref={input}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search by team, season or kit…"
+                  aria-label="Search jerseys"
+                  enterKeyHint="search"
+                  className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none"
+                />
+                <button type="button" onClick={() => setOpen(false)} aria-label="Close search" className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-tile">
+                  <X className="h-5 w-5" />
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -80,50 +93,63 @@ export function MobileMenu({
   links,
   signedIn,
   isAdmin,
+  logo,
 }: {
   links: { href: string; label: string }[];
   signedIn: boolean;
   isAdmin: boolean;
+  logo: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const current = pathname + (params.get("new") ? "?new=1" : "");
+
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Open menu" className="-ml-2 rounded-full p-2 hover:bg-tile lg:hidden">
+      <button onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open} className="-ml-2 rounded-full p-2 hover:bg-tile xl:hidden">
         <Menu className="h-5 w-5" strokeWidth={1.6} />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <nav className="absolute inset-y-0 left-0 flex w-[82%] max-w-sm flex-col bg-white p-6" aria-label="Mobile">
-            <button onClick={() => setOpen(false)} aria-label="Close menu" className="mb-6 self-end p-1">
-              <X className="h-5 w-5" />
-            </button>
-            {links.map((l) => (
+      <Drawer open={open} onClose={close} label="Menu">
+        <div className="flex h-16 shrink-0 items-center border-b border-line px-5">{logo}</div>
+        <nav aria-label="Mobile" className="flex flex-col px-5 py-2">
+          {links.map((l) => {
+            const active = current === l.href;
+            return (
               <Link
                 key={l.href}
                 href={l.href}
-                onClick={() => setOpen(false)}
-                className="border-b border-line py-4 font-display text-2xl"
+                onClick={close}
+                aria-current={active ? "page" : undefined}
+                className={clsx(
+                  "flex items-center justify-between border-b border-line py-4 font-display text-[1.6rem]",
+                  active && "text-accent",
+                )}
               >
                 {l.label}
+                <ChevronRight className="h-5 w-5 text-muted" strokeWidth={1.6} />
               </Link>
-            ))}
-            <Link href="/wishlist" onClick={() => setOpen(false)} className="mt-6 py-2 text-sm">
-              Wishlist
-            </Link>
-            <Link
-              href={signedIn ? (isAdmin ? "/admin" : "/account") : "/account/login"}
-              onClick={() => setOpen(false)}
-              className="py-2 text-sm"
-            >
-              {signedIn ? (isAdmin ? "Admin dashboard" : "My account") : "Sign in"}
-            </Link>
-            <Link href="/help" onClick={() => setOpen(false)} className="py-2 text-sm">
-              Help & delivery
-            </Link>
-          </nav>
+            );
+          })}
+        </nav>
+        <div className="mt-auto space-y-1 border-t border-line bg-tile/60 px-5 py-5 text-[15px]">
+          <Link href="/wishlist" onClick={close} className="flex items-center gap-3 py-2">
+            <Heart className="h-5 w-5" strokeWidth={1.6} /> Wishlist
+          </Link>
+          <Link
+            href={signedIn ? (isAdmin ? "/admin" : "/account") : "/account/login"}
+            onClick={close}
+            className="flex items-center gap-3 py-2"
+          >
+            <User className="h-5 w-5" strokeWidth={1.6} />
+            {signedIn ? (isAdmin ? "Admin dashboard" : "My account") : "Sign in"}
+          </Link>
+          <Link href="/help" onClick={close} className="flex items-center gap-3 py-2">
+            <HelpCircle className="h-5 w-5" strokeWidth={1.6} /> Help & delivery
+          </Link>
         </div>
-      )}
+      </Drawer>
     </>
   );
 }
