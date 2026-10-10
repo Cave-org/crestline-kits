@@ -16,7 +16,10 @@ export const viewport: Viewport = { themeColor: "#0b0b0b" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla, Grammarly) add attributes to <body> */}
+      <body className="min-h-screen antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

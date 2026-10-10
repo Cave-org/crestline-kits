@@ -43,3 +43,6 @@ next-env.d.ts
 
 # delivery archive
 crestline-kits.tar.gz
+
+# local photo uploads
+/public/uploads/
