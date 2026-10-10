@@ -2,22 +2,26 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "@/db/schema";
 
-// Only complain when the app is actually running. The production build loads this
-// file too, but never queries the database, so it shouldn't need DATABASE_URL.
-if (!process.env.DATABASE_URL && process.env.NEXT_PHASE !== "phase-production-build") {
-  throw new Error(
-    "DATABASE_URL is missing. Add your Postgres connection string to .env (see .env.example) and restart `npm run dev`.",
-  );
-}
-
 const globalForDb = globalThis as unknown as { pool?: Pool };
 
-const pool =
-  globalForDb.pool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
+function createPool() {
+  const url = process.env.DATABASE_URL;
+  const pool = new Pool({
+    connectionString: url,
     max: process.env.NODE_ENV === "production" ? 5 : 10,
   });
+  if (!url) {
+    // No error while the app is being built; only when a page actually needs the database.
+    pool.connect = (() => {
+      throw new Error(
+        "DATABASE_URL is missing. Add your Postgres connection string to .env locally, or to Environment Variables in Vercel.",
+      );
+    }) as Pool["connect"];
+  }
+  return pool;
+}
+
+const pool = globalForDb.pool ?? createPool();
 
 if (process.env.NODE_ENV !== "production") globalForDb.pool = pool;
 
