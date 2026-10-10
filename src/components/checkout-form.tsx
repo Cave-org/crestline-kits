@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { Lock, Smartphone } from "lucide-react";
 import { ProductImage } from "./product-image";
+import { PageSkeleton } from "./skeletons";
 import { cartLines } from "./cart-view";
 import { useCart } from "@/store/cart";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -43,7 +44,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
       .catch(() => setDiscount(0));
   }, [hydrated, promoCode, items]);
 
-  if (!hydrated) return <div className="container-x min-h-[60vh]" />;
+  if (!hydrated) return <PageSkeleton />;
 
   if (items.length === 0) {
     return (

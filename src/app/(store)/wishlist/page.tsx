@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/product-card";
+import { GridSkeleton } from "@/components/skeletons";
 import { useWishlist } from "@/store/wishlist";
 import { useHydrated } from "@/lib/use-hydrated";
 import type { ProductCard as Card } from "@/lib/catalog";
@@ -35,7 +36,7 @@ export default function WishlistPage() {
     <div className="container-x pt-8 md:pt-12">
       <h1 className="font-display text-4xl md:text-5xl">Wishlist</h1>
       {products === null ? (
-        <div className="min-h-[40vh]" />
+        <GridSkeleton count={4} />
       ) : shown.length === 0 ? (
         <div className="py-20 text-center">
           <p className="text-muted">Tap the heart on any jersey to save it here.</p>

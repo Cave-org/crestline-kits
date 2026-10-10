@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "./db";
 import { categories, productVariants, products } from "@/db/schema";
@@ -31,13 +32,13 @@ const cardColumns = {
   inStock: sql<boolean>`exists (select 1 from ${productVariants} v where v.product_id = ${products.id} and v.stock > 0)`,
 };
 
-export async function getCategories() {
+async function getCategoriesRaw() {
   return db.select().from(categories).orderBy(asc(categories.sortOrder));
 }
 
 export type SortKey = "newest" | "price-asc" | "price-desc" | "name";
 
-export async function listProducts(opts: {
+async function listProductsRaw(opts: {
   category?: string;
   q?: string;
   kit?: string;
@@ -74,7 +75,7 @@ export async function listProducts(opts: {
   return rows;
 }
 
-export async function getProduct(slug: string) {
+async function getProductRaw(slug: string) {
   const product = await db.query.products.findFirst({
     where: and(eq(products.slug, slug), eq(products.active, true)),
     with: {
@@ -85,7 +86,7 @@ export async function getProduct(slug: string) {
   return product ?? null;
 }
 
-export async function getRelated(productId: string, categoryId: string, limit = 8) {
+async function getRelatedRaw(productId: string, categoryId: string, limit = 8) {
   return db
     .select(cardColumns)
     .from(products)
@@ -103,3 +104,21 @@ export async function getProductsByIds(ids: string[]) {
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .where(and(eq(products.active, true), inArray(products.id, ids)));
 }
+
+/*
+ * Cached versions. The catalogue is read from memory instead of the database on every
+ * page view, which makes pages much faster when the database is far away.
+ * The cache is cleared whenever the admin saves a product or an order is paid
+ * (revalidateTag(CATALOG_TAG)), and refreshes on its own every 5 minutes as a fallback.
+ */
+export const CATALOG_TAG = "catalog";
+const opts = { tags: [CATALOG_TAG], revalidate: 300 };
+
+export const getCategories = unstable_cache(getCategoriesRaw, ["categories"], opts);
+export const listProducts = unstable_cache(
+  (o: Parameters<typeof listProductsRaw>[0] = {}) => listProductsRaw(o),
+  ["list-products"],
+  opts,
+);
+export const getProduct = unstable_cache(getProductRaw, ["product"], opts);
+export const getRelated = unstable_cache(getRelatedRaw, ["related"], opts);

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Heart, X } from "lucide-react";
 import { ProductImage } from "./product-image";
+import { PageSkeleton } from "./skeletons";
 import { QtyStepper } from "./qty-stepper";
 import { useCart, type CartItem } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
@@ -68,7 +69,7 @@ export function CartView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, items]);
 
-  if (!hydrated) return <div className="container-x min-h-[50vh] pt-10" />;
+  if (!hydrated) return <PageSkeleton />;
 
   const count = items.reduce((n, i) => n + i.quantity, 0);
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);

@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/catalog";
 import { redirect } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
@@ -13,6 +14,7 @@ import { slugify, toPesewas } from "@/lib/format";
 export type ActionState = { error?: string; ok?: string } | undefined;
 
 function refreshStore() {
+  revalidateTag(CATALOG_TAG);
   revalidatePath("/", "layout");
 }
 

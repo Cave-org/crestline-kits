@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/catalog";
 import { isValidWebhook } from "@/lib/paystack";
 import { markOrderPaid } from "@/lib/orders";
 
@@ -16,6 +18,7 @@ export async function POST(req: Request) {
 
   if (event.event === "charge.success" && event.data.status === "success" && event.data.currency === "GHS") {
     const result = await markOrderPaid(event.data.reference, event.data.amount, event.data.channel, event.data.paid_at);
+    if (result.ok && !result.alreadyPaid) revalidateTag(CATALOG_TAG); // stock changed
     if (!result.ok) console.error("Webhook could not mark order paid:", event.data.reference, result.reason);
   }
   return NextResponse.json({ received: true });
