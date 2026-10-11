@@ -12,8 +12,15 @@ import { OrderSummary } from "@/components/order-summary";
 export const metadata: Metadata = { title: "Order status", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
-export default async function CompletePage({ searchParams }: { searchParams: Promise<{ reference?: string }> }) {
-  const { reference } = await searchParams;
+export default async function CompletePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reference?: string | string[]; trxref?: string | string[] }>;
+}) {
+  const sp = await searchParams;
+  // The same value can arrive more than once (e.g. ?reference=X&reference=X), so take the first
+  const first = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v);
+  const reference = first(sp.reference) ?? first(sp.trxref);
   if (!reference) return <Failed message="We couldn't find that payment." />;
 
   let paid = false;

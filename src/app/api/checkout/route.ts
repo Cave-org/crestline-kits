@@ -89,7 +89,8 @@ export async function POST(req: Request) {
         email: input.email,
         amount: priced.total,
         reference,
-        callbackUrl: `${site}/checkout/complete?reference=${encodeURIComponent(reference)}`,
+        // Paystack adds ?reference=… to this URL itself
+        callbackUrl: `${site}/checkout/complete`,
         metadata: { order_number: order.number, customer_name: input.name, phone: input.phone },
       });
       return NextResponse.json({ authorizationUrl: payment.authorization_url, orderNumber: order.number });
