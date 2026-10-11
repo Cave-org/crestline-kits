@@ -4,8 +4,8 @@ export const store = {
   name: "Crestline Kits",
   tagline: "Football jerseys for every matchday",
   currency: "GHS",
-  email: "hello@crestlinekits.com",
-  phone: "+233 20 000 0000",
+  email: "crestlinekits@gmail.com",
+  phone: "+233 55 125 8689",
   freeDeliveryThreshold: 100000, // GH₵ 1,000
   customizationFee: 5000, // GH₵ 50 for name + number printing
   announcement: "Free delivery in Greater Accra on orders over GH₵ 1,000 · Pay with Mobile Money",
