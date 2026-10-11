@@ -12,6 +12,14 @@ const TYPES: Record<string, string> = {
   "image/avif": "avif",
 };
 
+// Vercel may add a prefix to the token name when the Blob store is connected
+// (e.g. CRESTLINE_KITS_BLOB_READ_WRITE_TOKEN), so accept any *_READ_WRITE_TOKEN.
+function blobToken() {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const key = Object.keys(process.env).find((k) => k.endsWith("READ_WRITE_TOKEN") && process.env[k]);
+  return key ? process.env[key] : undefined;
+}
+
 // Uploads a product photo.
 // - With BLOB_READ_WRITE_TOKEN set: stores it in Vercel Blob (needed on the live site).
 // - Without it, during local development: saves it to public/uploads on your computer.
@@ -28,8 +36,9 @@ export async function POST(req: Request) {
 
   const name = `${crypto.randomUUID()}.${ext}`;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`products/${name}`, file, { access: "public", contentType: file.type });
+  const token = blobToken();
+  if (token) {
+    const blob = await put(`products/${name}`, file, { access: "public", contentType: file.type, token });
     return NextResponse.json({ url: blob.url });
   }
 
