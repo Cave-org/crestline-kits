@@ -105,6 +105,31 @@ export async function getProductsByIds(ids: string[]) {
     .where(and(eq(products.active, true), inArray(products.id, ids)));
 }
 
+
+/** Everything the shop filters need, in one small query. The catalogue is small, so filtering happens in memory. */
+export type ShopItem = ProductCard & {
+  categoryName: string;
+  season: string | null;
+  createdAt: string;
+  sizes: string[]; // sizes currently in stock
+};
+
+async function getShopIndexRaw(): Promise<ShopItem[]> {
+  const rows = await db
+    .select({
+      ...cardColumns,
+      categoryName: categories.name,
+      season: products.season,
+      createdAt: products.createdAt,
+      sizes: sql<string[]>`coalesce(array(select v.size from ${productVariants} v where v.product_id = ${products.id} and v.stock > 0 order by v.sort_order), '{}')`,
+    })
+    .from(products)
+    .innerJoin(categories, eq(products.categoryId, categories.id))
+    .where(eq(products.active, true))
+    .orderBy(desc(products.createdAt), asc(products.name));
+  return rows.map((r) => ({ ...r, createdAt: new Date(r.createdAt).toISOString() }));
+}
+
 /*
  * Cached versions. The catalogue is read from memory instead of the database on every
  * page view, which makes pages much faster when the database is far away.
@@ -122,3 +147,4 @@ export const listProducts = unstable_cache(
 );
 export const getProduct = unstable_cache(getProductRaw, ["product"], opts);
 export const getRelated = unstable_cache(getRelatedRaw, ["related"], opts);
+export const getShopIndex = unstable_cache(getShopIndexRaw, ["shop-index"], opts);
