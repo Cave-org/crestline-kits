@@ -38,7 +38,8 @@ export function ShopShell({ initial, children }: { initial: Filters; children: R
       const stay = pageCat && next.cat.includes(pageCat);
       const base = stay ? pathname : "/shop";
       const qs = filtersToQuery(stay ? { ...next, cat: next.cat.filter((c) => c !== pageCat) } : next);
-      startTransition(() => router.replace(qs ? `${base}?${qs}` : base, { scroll: false }));
+      // Next.js ignores replace(samePath, { scroll: false }) when the query becomes empty, so drop the option then
+      startTransition(() => (qs ? router.replace(`${base}?${qs}`, { scroll: false }) : router.replace(base)));
     },
     [router, pathname],
   );
