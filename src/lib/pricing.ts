@@ -3,7 +3,9 @@ import { z } from "zod";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { productVariants, promoCodes } from "@/db/schema";
-import { deliveryFeeFor, store } from "./config";
+import { deliveryFeeFor } from "./config";
+import { currencyFor, ghsToUsd, normalizeCountry, priceFor, printingFee, usdToGhs, type Currency } from "./market";
+import { formatMoney } from "./format";
 
 export const cartLineSchema = z.object({
   productId: z.string().min(1),
@@ -28,7 +30,8 @@ export type CartLineInput = z.infer<typeof cartLineSchema>;
 
 export class PricingError extends Error {}
 
-export async function validatePromo(code: string | null | undefined, subtotal: number) {
+/** Promo minimums and fixed discounts are set in GH₵; for USD orders they're converted. */
+export async function validatePromo(code: string | null | undefined, subtotal: number, currency: Currency = "GHS") {
   if (!code?.trim()) return { promo: null, discount: 0 };
   const promo = await db.query.promoCodes.findFirst({
     where: eq(promoCodes.code, code.trim().toUpperCase()),
@@ -37,12 +40,16 @@ export async function validatePromo(code: string | null | undefined, subtotal: n
   if (promo.expiresAt && promo.expiresAt < new Date()) throw new PricingError("That promo code has expired");
   if (promo.maxUses != null && promo.usedCount >= promo.maxUses)
     throw new PricingError("That promo code has been fully used");
-  if (subtotal < promo.minSubtotal)
-    throw new PricingError(`Spend GH₵ ${(promo.minSubtotal / 100).toFixed(2)} or more to use this code`);
+  const subtotalGhs = currency === "GHS" ? subtotal : usdToGhs(subtotal);
+  if (subtotalGhs < promo.minSubtotal) {
+    const min = currency === "GHS" ? promo.minSubtotal : ghsToUsd(promo.minSubtotal);
+    throw new PricingError(`Spend ${formatMoney(min, currency)} or more to use this code`);
+  }
+  const fixed = currency === "GHS" ? promo.value : ghsToUsd(promo.value);
   const discount =
     promo.type === "PERCENT"
       ? Math.round((subtotal * Math.min(promo.value, 100)) / 100)
-      : Math.min(promo.value, subtotal);
+      : Math.min(fixed, subtotal);
   return { promo, discount };
 }
 
@@ -50,10 +57,13 @@ export async function validatePromo(code: string | null | undefined, subtotal: n
 export async function priceCart(opts: {
   lines: CartLineInput[];
   promoCode?: string | null;
+  country?: string;
   deliveryMethod?: string;
   region?: string;
 }) {
   if (opts.lines.length === 0) throw new PricingError("Your cart is empty");
+  const country = normalizeCountry(opts.country);
+  const currency = currencyFor(country);
 
   const variants = await db.query.productVariants.findMany({
     where: inArray(
@@ -82,14 +92,14 @@ export async function priceCart(opts: {
     }
     const customName = v.product.allowCustomization ? line.customName?.toUpperCase() || null : null;
     const customNumber = v.product.allowCustomization ? line.customNumber || null : null;
-    const customizationFee = customName || customNumber ? store.customizationFee : 0;
+    const customizationFee = customName || customNumber ? printingFee(currency) : 0;
     return {
       productId: v.productId,
       variantId: v.id,
       productName: v.product.name,
       image: v.product.images[0] ?? null,
       size: v.size,
-      unitPrice: v.product.price,
+      unitPrice: priceFor(v.product, currency).price,
       quantity: line.quantity,
       customName,
       customNumber,
@@ -99,9 +109,23 @@ export async function priceCart(opts: {
 
   const subtotal = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
   const customizationTotal = items.reduce((s, i) => s + i.customizationFee * i.quantity, 0);
-  const { promo, discount } = await validatePromo(opts.promoCode, subtotal);
-  const deliveryFee = deliveryFeeFor(opts.deliveryMethod ?? "delivery", opts.region ?? "Greater Accra", subtotal);
+  const { promo, discount } = await validatePromo(opts.promoCode, subtotal, currency);
+  // Outside Ghana, delivery is arranged with the buyer after the order, so it isn't charged here
+  const deliveryFee =
+    country === "GH" ? deliveryFeeFor(opts.deliveryMethod ?? "delivery", opts.region ?? "Greater Accra", subtotal) : 0;
   const total = Math.max(0, subtotal + customizationTotal + deliveryFee - discount);
+  const chargeAmount = currency === "GHS" ? total : usdToGhs(total);
 
-  return { items, subtotal, customizationTotal, discount, deliveryFee, total, promoCode: promo?.code ?? null };
+  return {
+    chargeAmount,
+    items,
+    subtotal,
+    customizationTotal,
+    discount,
+    deliveryFee,
+    total,
+    promoCode: promo?.code ?? null,
+    country,
+    currency,
+  };
 }

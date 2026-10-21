@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { categories, products, productVariants } from "@/db/schema";
 import { formatMoney } from "@/lib/format";
+import { priceFor } from "@/lib/market";
 import { kitTypes } from "@/lib/config";
 import { ProductImage } from "@/components/product-image";
 import { toggleProductActive } from "../actions";
@@ -101,6 +102,7 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
                       <div className="mt-2 flex items-center justify-between gap-2">
                         <span className="text-sm">
                           {formatMoney(p.price)}
+                          <span className="ml-1.5 text-[12px] text-muted">· {formatMoney(priceFor(p, "USD").price, "USD")}</span>
                           <span
                             className={`ml-2 text-[12px] ${p.total === 0 ? "font-semibold text-sale" : p.total <= LOW_STOCK ? "font-semibold text-accent" : "text-muted"}`}
                           >
@@ -151,6 +153,10 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
                         {p.compareAtPrice && p.compareAtPrice > p.price && (
                           <span className="ml-1.5 text-[12px] text-muted line-through">{formatMoney(p.compareAtPrice)}</span>
                         )}
+                        <span className="mt-0.5 block text-[12px] text-muted" title={p.priceUsd ? "International price" : "Converted from GH₵ (no USD price set)"}>
+                          {formatMoney(priceFor(p, "USD").price, "USD")}
+                          {!p.priceUsd && " (auto)"}
+                        </span>
                       </td>
                       <td className="px-5 py-3 tabular-nums">
                         <span className={p.total === 0 ? "font-semibold text-sale" : p.total <= LOW_STOCK ? "font-semibold text-accent" : ""}>

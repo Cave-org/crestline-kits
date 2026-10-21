@@ -8,6 +8,7 @@ import { verifyTransaction } from "@/lib/paystack";
 import { markOrderPaid } from "@/lib/orders";
 import { ClearCart } from "@/components/clear-cart";
 import { OrderSummary } from "@/components/order-summary";
+import { countryName } from "@/lib/countries";
 
 export const metadata: Metadata = { title: "Order status", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -26,8 +27,8 @@ export default async function CompletePage({
   let paid = false;
   try {
     const tx = await verifyTransaction(reference);
-    if (tx.status === "success" && tx.currency === "GHS") {
-      const result = await markOrderPaid(tx.reference, tx.amount, tx.channel, tx.paid_at);
+    if (tx.status === "success") {
+      const result = await markOrderPaid(tx.reference, tx.amount, tx.currency, tx.channel, tx.paid_at);
       paid = result.ok;
     }
   } catch (e) {
@@ -52,8 +53,10 @@ export default async function CompletePage({
       <CheckCircle2 className="h-12 w-12 text-ok" strokeWidth={1.5} />
       <h1 className="font-display mt-4 text-5xl">Thank you, {order.name.split(" ")[0]}!</h1>
       <p className="mt-3 text-muted">
-        Order <strong className="text-ink">{order.number}</strong> is confirmed. Keep this number for reference. We'll call{" "}
-        {order.phone} when it's on the way.
+        Order <strong className="text-ink">{order.number}</strong> is confirmed. Keep this number for reference.{" "}
+        {order.country === "GH"
+          ? `We'll call ${order.phone} when it's on the way.`
+          : `We'll contact you at ${order.email} or on WhatsApp with the delivery cost and options for ${countryName(order.country)}.`}
       </p>
       <div className="mt-8">
         <OrderSummary order={order} />
@@ -61,7 +64,7 @@ export default async function CompletePage({
       <div className="mt-6 rounded-xl bg-tile p-5 text-sm">
         <p className="font-semibold">{order.deliveryMethod === "pickup" ? "Pickup" : "Delivering to"}</p>
         <p className="mt-1 text-muted">
-          {order.deliveryMethod === "pickup" ? "We'll call you when your order is ready to collect." : `${order.address}, ${order.city}, ${order.region}`}
+          {order.deliveryMethod === "pickup" ? "We'll call you when your order is ready to collect." : [order.address, order.city, order.region, order.country !== "GH" && countryName(order.country)].filter(Boolean).join(", ")}
         </p>
       </div>
       <Link href="/shop" className="btn btn-primary mt-8">Continue shopping</Link>

@@ -16,8 +16,9 @@ export async function POST(req: Request) {
     data: { reference: string; amount: number; currency: string; channel: string; paid_at?: string; status: string };
   };
 
-  if (event.event === "charge.success" && event.data.status === "success" && event.data.currency === "GHS") {
-    const result = await markOrderPaid(event.data.reference, event.data.amount, event.data.channel, event.data.paid_at);
+  if (event.event === "charge.success" && event.data.status === "success") {
+    const d = event.data;
+    const result = await markOrderPaid(d.reference, d.amount, d.currency, d.channel, d.paid_at);
     if (result.ok && !result.alreadyPaid) revalidateTag(CATALOG_TAG); // stock changed
     if (!result.ok) console.error("Webhook could not mark order paid:", event.data.reference, result.reason);
   }

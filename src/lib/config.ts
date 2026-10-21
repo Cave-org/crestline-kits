@@ -8,6 +8,10 @@ export const store = {
   phone: "+233 55 125 8689",
   freeDeliveryThreshold: 100000, // GH₵ 1,000
   customizationFee: 5000, // GH₵ 50 for name + number printing
+  customizationFeeUsd: 500, // $5 printing for buyers outside Ghana and Nigeria (cents)
+  // Used only when a jersey has no USD price set in admin: the GH₵ price is converted
+  // at this rate and rounded up to a whole dollar. Update it now and then.
+  ghsPerUsd: 11.5,
   announcement: "Free delivery in Greater Accra on orders over GH₵ 1,000 · Pay with Mobile Money",
 };
 

@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { Lock, Smartphone } from "lucide-react";
+import { CreditCard, Globe, Lock, Smartphone } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { PageSkeleton } from "./skeletons";
-import { cartLines } from "./cart-view";
+import { cartLines, cartUnit } from "./cart-view";
+import { CountrySelect, useMarket, useMoney } from "./market";
 import { useCart } from "@/store/cart";
 import { useHydrated } from "@/lib/use-hydrated";
-import { deliveryFeeFor, regions, store } from "@/lib/config";
+import { deliveryFeeFor, regions } from "@/lib/config";
+import { priceFor, usdToGhs } from "@/lib/market";
 import { formatMoney } from "@/lib/format";
 
 type Defaults = { email: string; name: string; phone: string };
@@ -18,6 +20,9 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
   const hydrated = useHydrated();
   const items = useCart((s) => s.items);
   const promoCode = useCart((s) => s.promoCode);
+  const { country } = useMarket();
+  const money = useMoney();
+  const ghana = country === "GH";
 
   const [form, setForm] = useState({
     ...defaults,
@@ -37,12 +42,21 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
     fetch("/api/promo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: promoCode, lines: cartLines(items) }),
+      body: JSON.stringify({ code: promoCode, country, lines: cartLines(items) }),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setDiscount(j?.discount ?? 0))
       .catch(() => setDiscount(0));
-  }, [hydrated, promoCode, items]);
+  }, [hydrated, promoCode, items, country]);
+
+  // "Region" is a Ghana region in Ghana and a typed-in state/province elsewhere; pickup is Ghana only
+  useEffect(() => {
+    setForm((f) => {
+      const isGhanaRegion = (regions as readonly string[]).includes(f.region);
+      if (ghana) return { ...f, region: isGhanaRegion ? f.region : "Greater Accra" };
+      return { ...f, region: isGhanaRegion ? "" : f.region, deliveryMethod: "delivery" };
+    });
+  }, [ghana]);
 
   if (!hydrated) return <PageSkeleton />;
 
@@ -55,9 +69,9 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
     );
   }
 
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const printing = items.reduce((s, i) => s + (i.customName || i.customNumber ? store.customizationFee * i.quantity : 0), 0);
-  const delivery = deliveryFeeFor(form.deliveryMethod, form.region, subtotal);
+  const subtotal = items.reduce((s, i) => s + priceFor({ price: i.price, priceUsd: i.priceUsd }, money.currency).price * i.quantity, 0);
+  const printing = items.reduce((s, i) => s + (i.customName || i.customNumber ? money.printing * i.quantity : 0), 0);
+  const delivery = ghana ? deliveryFeeFor(form.deliveryMethod, form.region, subtotal) : 0;
   const total = Math.max(0, subtotal + printing + delivery - discount);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -72,7 +86,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, promoCode, lines: cartLines(items) }),
+        body: JSON.stringify({ ...form, country, promoCode, lines: cartLines(items) }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -115,45 +129,64 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
               </div>
               <div>
                 <label className="label" htmlFor="phone">Phone number</label>
-                <input id="phone" type="tel" required autoComplete="tel" placeholder="024 123 4567" className={inputCls("phone")} value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\s/g, "") }))} />
+                <input id="phone" type="tel" required autoComplete="tel" placeholder={ghana ? "024 123 4567" : "With country code, e.g. +44 7700 900123"} className={inputCls("phone")} value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/[\s()-]/g, "") }))} />
               </div>
             </div>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold">Delivery</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {(["delivery", "pickup"] as const).map((m) => (
-                <label
-                  key={m}
-                  className={clsx(
-                    "flex cursor-pointer items-start gap-3 rounded-lg border p-4",
-                    form.deliveryMethod === m ? "border-ink" : "border-line",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="deliveryMethod"
-                    checked={form.deliveryMethod === m}
-                    onChange={() => setForm((f) => ({ ...f, deliveryMethod: m }))}
-                    className="mt-1 accent-ink"
-                  />
-                  <span>
-                    <span className="block text-sm font-semibold">{m === "delivery" ? "Deliver to me" : "Pick up"}</span>
-                    <span className="text-[13px] text-muted">
-                      {m === "delivery" ? "1–4 working days across Ghana" : "Free · we'll call when it's ready"}
-                    </span>
-                  </span>
-                </label>
-              ))}
+            <div className="mt-4">
+              <label className="label" htmlFor="country">Country</label>
+              <CountrySelect id="country" label="Country" className={inputCls("country")} />
             </div>
+
+            {ghana ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {(["delivery", "pickup"] as const).map((m) => (
+                  <label
+                    key={m}
+                    className={clsx(
+                      "flex cursor-pointer items-start gap-3 rounded-lg border p-4",
+                      form.deliveryMethod === m ? "border-ink" : "border-line",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="deliveryMethod"
+                      checked={form.deliveryMethod === m}
+                      onChange={() => setForm((f) => ({ ...f, deliveryMethod: m }))}
+                      className="mt-1 accent-ink"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold">{m === "delivery" ? "Deliver to me" : "Pick up"}</span>
+                      <span className="text-[13px] text-muted">
+                        {m === "delivery" ? "1–4 working days across Ghana" : "Free · we'll call when it's ready"}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 flex items-start gap-3 rounded-lg border border-line p-4">
+                <Globe className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.6} />
+                <p className="text-sm text-ink/80">
+                  <strong>Delivery is arranged after you order.</strong> You pay for the jerseys now, and we'll contact you by
+                  email or WhatsApp with the delivery cost and options for your country before we send anything.
+                </p>
+              </div>
+            )}
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="label" htmlFor="region">Region</label>
-                <select id="region" className="input" value={form.region} onChange={set("region")}>
-                  {regions.map((r) => <option key={r}>{r}</option>)}
-                </select>
+                <label className="label" htmlFor="region">{ghana ? "Region" : "State / province / region"}</label>
+                {ghana ? (
+                  <select id="region" className={inputCls("region")} value={form.region} onChange={set("region")}>
+                    {regions.map((r) => <option key={r}>{r}</option>)}
+                  </select>
+                ) : (
+                  <input id="region" autoComplete="address-level1" className={inputCls("region")} value={form.region} onChange={set("region")} />
+                )}
               </div>
               {form.deliveryMethod === "delivery" && (
                 <>
@@ -166,7 +199,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
                     <input
                       id="address"
                       autoComplete="street-address"
-                      placeholder="House no., street, landmark or GhanaPost GPS"
+                      placeholder={ghana ? "House no., street, landmark or GhanaPost GPS" : "Street address, apartment, postcode"}
                       className={inputCls("address")}
                       value={form.address}
                       onChange={set("address")}
@@ -176,16 +209,29 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
               )}
               <div className="sm:col-span-2">
                 <label className="label" htmlFor="notes">Notes (optional)</label>
-                <textarea id="notes" rows={2} className="input" value={form.notes} onChange={set("notes")} placeholder="Anything the rider should know" />
+                <textarea id="notes" rows={2} className="input" value={form.notes} onChange={set("notes")} placeholder={ghana ? "Anything the rider should know" : "Anything we should know about delivery"} />
               </div>
             </div>
           </section>
 
           <section className="flex items-start gap-3 rounded-lg bg-tile p-4">
-            <Smartphone className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.6} />
+            {ghana ? (
+              <Smartphone className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.6} />
+            ) : (
+              <CreditCard className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.6} />
+            )}
             <p className="text-sm text-ink/80">
-              You'll pay with <strong>Mobile Money</strong> (MTN, Telecel or AirtelTigo) on the next screen, then approve the
-              prompt on your phone.
+              {ghana ? (
+                <>
+                  You'll pay with <strong>Mobile Money</strong> (MTN, Telecel or AirtelTigo) or a <strong>bank card</strong> on
+                  the next screen.
+                </>
+              ) : (
+                <>
+                  You'll pay by <strong>Visa or Mastercard</strong> on the next screen. Payments are processed in Ghana
+                  cedis{money.currency === "USD" && ", and your bank converts it to your own currency"}.
+                </>
+              )}
             </p>
           </section>
         </div>
@@ -208,22 +254,25 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
                     {(i.customName || i.customNumber) && ` · ${[i.customName, i.customNumber].filter(Boolean).join(" ")}`}
                   </p>
                 </div>
-                <p className="text-sm font-medium">
-                  {formatMoney((i.price + (i.customName || i.customNumber ? store.customizationFee : 0)) * i.quantity)}
-                </p>
+                <p className="text-sm font-medium">{money.format(cartUnit(i, money.currency) * i.quantity)}</p>
               </li>
             ))}
           </ul>
           <dl className="mt-5 space-y-2.5 border-t border-line pt-5 text-sm">
-            <Line label="Subtotal" value={formatMoney(subtotal)} />
-            {printing > 0 && <Line label="Printing" value={formatMoney(printing)} />}
-            <Line label="Delivery" value={delivery === 0 ? "Free" : formatMoney(delivery)} />
-            {discount > 0 && <Line label={`Discount (${promoCode})`} value={`- ${formatMoney(discount)}`} />}
+            <Line label="Subtotal" value={money.format(subtotal)} />
+            {printing > 0 && <Line label="Printing" value={money.format(printing)} />}
+            <Line label="Delivery" value={!ghana ? "Arranged after order" : delivery === 0 ? "Free" : money.format(delivery)} />
+            {discount > 0 && <Line label={`Discount (${promoCode})`} value={`- ${money.format(discount)}`} />}
           </dl>
           <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
             <span className="text-lg font-semibold">Total</span>
-            <span className="text-xl font-semibold">{formatMoney(total)}</span>
+            <span className="text-xl font-semibold">{money.format(total)}</span>
           </div>
+          {money.currency === "USD" && (
+            <p className="mt-2 text-right text-[12px] text-muted">
+              Charged as {formatMoney(usdToGhs(total))}. Your bank converts it to your currency.
+            </p>
+          )}
           {error && (
             <p className="mt-4 rounded-md bg-sale/10 p-3 text-sm text-sale" role="alert">
               {error}
@@ -231,7 +280,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
           )}
           <button disabled={submitting} className="btn btn-primary mt-5 w-full !py-4 text-base">
             <Lock className="h-4 w-4" />
-            {submitting ? "Starting payment…" : `Pay ${formatMoney(total)} with MoMo`}
+            {submitting ? "Starting payment…" : `Pay ${money.format(total)}`}
           </button>
           <p className="mt-3 text-center text-[12px] text-muted">Secured by Paystack</p>
         </aside>

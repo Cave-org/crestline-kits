@@ -12,6 +12,7 @@ function key() {
 type InitArgs = {
   email: string;
   amount: number; // pesewas
+  channels: string[];
   reference: string;
   callbackUrl: string;
   metadata?: Record<string, unknown>;
@@ -24,11 +25,13 @@ export async function initializeTransaction(args: InitArgs) {
     body: JSON.stringify({
       email: args.email,
       amount: args.amount,
+      // Paystack only charges Ghana businesses in GH₵. International cards work once
+      // "Accept international payments" is turned on in the Paystack dashboard.
       currency: "GHS",
       reference: args.reference,
       callback_url: args.callbackUrl,
-      // Mobile money only for now. Add "card" here when you are ready for cards.
-      channels: ["mobile_money"],
+      // Ghana: Mobile Money + card. Everyone else: card (see paymentChannels in lib/market.ts)
+      channels: args.channels,
       metadata: args.metadata,
     }),
     cache: "no-store",

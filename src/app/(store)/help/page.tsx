@@ -24,18 +24,25 @@ export default function HelpPage() {
         </p>
         <p>All other regions: {formatMoney(deliveryFees.default)}, delivered in 2–4 working days.</p>
         <p>You can also choose free pickup at checkout. We'll call you when your order is ready.</p>
+        <p>
+          <strong>Outside Ghana:</strong> choose your country at checkout and pay for your jerseys (in GH₵ for Nigeria, in
+          US dollars everywhere else). Delivery isn't charged at checkout. We'll contact you by email or WhatsApp with the
+          shipping cost and options for your country before we send your order.
+        </p>
       </Section>
 
       <Section id="payment" title="Payment">
         <p>
-          We take Mobile Money (MTN MoMo, Telecel Cash and AirtelTigo Money) through Paystack. You'll get a prompt on
-          your phone to approve the payment. We never see or store your PIN.
+          In Ghana we take Mobile Money (MTN MoMo, Telecel Cash and AirtelTigo Money) and bank cards through Paystack. For
+          Mobile Money you'll get a prompt on your phone to approve the payment. Outside Ghana, pay by Visa or Mastercard.
+          We never see or store your PIN or card details.
         </p>
       </Section>
 
       <Section id="printing" title="Name & number printing">
         <p>
-          Add any name (up to 14 letters) and number (0–99) to a matchday jersey for {formatMoney(store.customizationFee)}.
+          Add any name (up to 14 letters) and number (0–99) to a matchday jersey for {formatMoney(store.customizationFee)} (
+          {formatMoney(store.customizationFeeUsd, "USD")} outside Ghana and Nigeria).
           Printed orders take 2–3 extra days. Printed shirts are made for you, so they can't be exchanged.
         </p>
       </Section>

@@ -1,11 +1,10 @@
-export function formatMoney(pesewas: number) {
-  return (
-    "GH₵ " +
-    (pesewas / 100).toLocaleString("en-GH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  );
+/** Amounts are in the smallest unit (pesewas or cents). Pass the order's currency for USD orders. */
+export function formatMoney(amount: number, currency: string = "GHS") {
+  const n = (amount / 100).toLocaleString(currency === "USD" ? "en-US" : "en-GH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return currency === "USD" ? `$${n}` : `GH₵ ${n}`;
 }
 
 export function toPesewas(cedis: string | number) {

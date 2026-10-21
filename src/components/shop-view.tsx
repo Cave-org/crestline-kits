@@ -3,15 +3,19 @@ import { ProductCard } from "./product-card";
 import { ActiveChips, FilterPanel, MobileFilters, ResultsArea, ShopShell, SortMenu } from "./shop-filters";
 import { getCategories, getShopIndex } from "@/lib/catalog";
 import { kitTypes, sizes } from "@/lib/config";
-import { applyFilters, buildFacets, parseFilters, type RawParams } from "@/lib/shop-filters";
+import { applyFilters, buildFacets, parseFilters, priceBuckets, type RawParams } from "@/lib/shop-filters";
+import { getMarket } from "@/lib/market-server";
 
 export type ShopSearchParams = RawParams;
 
 export async function ShopView({ category, searchParams }: { category?: string; searchParams: ShopSearchParams }) {
-  const [categories, index] = await Promise.all([getCategories(), getShopIndex()]);
+  const [categories, index, { currency }] = await Promise.all([getCategories(), getShopIndex(), getMarket()]);
   const filters = parseFilters(searchParams, category);
-  const results = applyFilters(index, filters);
-  const facets = buildFacets(index, filters, categories, kitTypes, sizes);
+  // Price ranges from the other currency don't apply, so ignore them
+  const known = new Set(priceBuckets[currency].map((b) => b.id));
+  filters.price = filters.price.filter((id) => known.has(id));
+  const results = applyFilters(index, filters, currency);
+  const facets = buildFacets(index, filters, categories, kitTypes, sizes, currency);
 
   const only = filters.cat.length === 1 ? categories.find((c) => c.slug === filters.cat[0]) : undefined;
   const title = filters.q

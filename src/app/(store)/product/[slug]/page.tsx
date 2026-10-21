@@ -8,6 +8,8 @@ import { ProductRow } from "@/components/product-row";
 import { getProduct, getRelated } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 import { store } from "@/lib/config";
+import { Price } from "@/components/market";
+import { getMarket } from "@/lib/market-server";
 
 
 type Props = { params: Promise<{ slug: string }> };
@@ -27,8 +29,8 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) notFound();
-  const related = await getRelated(product.id, product.categoryId);
-  const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
+  const [related, { country }] = await Promise.all([getRelated(product.id, product.categoryId), getMarket()]);
+  const inGhana = country === "GH";
 
   return (
     <>
@@ -48,9 +50,8 @@ export default async function ProductPage({ params }: Props) {
               {product.season ? ` · ${product.season}` : ""}
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-[2.4rem] md:leading-tight">{product.name}</h1>
-            <p className="mt-4 flex items-baseline gap-3">
-              <span className="text-2xl font-semibold md:text-3xl">{formatMoney(product.price)}</span>
-              {onSale && <span className="text-muted line-through">{formatMoney(product.compareAtPrice!)}</span>}
+            <p className="mt-4">
+              <Price product={product} size="lg" />
             </p>
             <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-muted">{product.description}</p>
 
@@ -62,15 +63,17 @@ export default async function ProductPage({ params }: Props) {
                 image: product.images[0] ?? null,
                 color: product.color,
                 price: product.price,
+                compareAtPrice: product.compareAtPrice,
+                priceUsd: product.priceUsd,
+                compareAtPriceUsd: product.compareAtPriceUsd,
                 allowCustomization: product.allowCustomization,
               }}
               variants={product.variants.map((v) => ({ id: v.id, size: v.size, stock: v.stock }))}
-              customizationFee={store.customizationFee}
             />
 
             <div className="mt-6 grid grid-cols-3 gap-2 rounded-lg bg-tile p-4 text-center text-[12px] text-ink/80">
-              <div className="flex flex-col items-center gap-1.5"><Smartphone className="h-4 w-4" strokeWidth={1.6} />Mobile Money</div>
-              <div className="flex flex-col items-center gap-1.5"><Truck className="h-4 w-4" strokeWidth={1.6} />Delivery across Ghana</div>
+              <div className="flex flex-col items-center gap-1.5"><Smartphone className="h-4 w-4" strokeWidth={1.6} />{inGhana ? "Mobile Money or card" : "Pay by card"}</div>
+              <div className="flex flex-col items-center gap-1.5"><Truck className="h-4 w-4" strokeWidth={1.6} />{inGhana ? "Delivery across Ghana" : "We ship to you"}</div>
               <div className="flex flex-col items-center gap-1.5"><RefreshCw className="h-4 w-4" strokeWidth={1.6} />7-day size exchange</div>
             </div>
 
@@ -82,11 +85,18 @@ export default async function ProductPage({ params }: Props) {
                 </ul>
               </Accordion>
               <Accordion title="Delivery & payment">
-                <p>
-                  Greater Accra: 1–2 working days. Other regions: 2–4 working days. Free delivery in Greater Accra on
-                  orders over {formatMoney(store.freeDeliveryThreshold)}. Pay securely with MTN MoMo, Telecel Cash or
-                  AirtelTigo Money.
-                </p>
+                {inGhana ? (
+                  <p>
+                    Greater Accra: 1–2 working days. Other regions: 2–4 working days. Free delivery in Greater Accra on
+                    orders over {formatMoney(store.freeDeliveryThreshold)}. Pay securely with MTN MoMo, Telecel Cash,
+                    AirtelTigo Money or a bank card.
+                  </p>
+                ) : (
+                  <p>
+                    We deliver outside Ghana too. Pay for your jerseys by card at checkout, and we'll contact you with the
+                    delivery cost and options for your country before we send your order.
+                  </p>
+                )}
               </Accordion>
               <Accordion title="How it fits">
                 <p>Regular fit. Take your usual size; size up for a looser streetwear look. <Link href="/help#sizing" className="underline">See the size guide</Link>.</p>

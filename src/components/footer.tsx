@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 import { store } from "@/lib/config";
+import { CountrySelect } from "./market";
 
 const cols = [
   {
@@ -40,8 +41,12 @@ export function Footer() {
         <div className="max-w-sm">
           <Logo />
           <p className="mt-4 text-sm text-muted">
-            {store.tagline}. Delivered across Ghana, paid securely with Mobile Money.
+            {store.tagline}. Delivered across Ghana and beyond, paid securely with Mobile Money or card.
           </p>
+          <label className="mt-5 flex items-center gap-2 text-sm">
+            <span className="text-muted">Shipping to</span>
+            <CountrySelect className="w-48 min-w-0 rounded-md border border-line bg-white px-2.5 py-1.5 text-sm outline-none focus:border-ink" />
+          </label>
           <p className="mt-6 text-sm">
             <a href={`mailto:${store.email}`} className="underline underline-offset-4">
               {store.email}
@@ -71,11 +76,13 @@ export function Footer() {
       </div>
       <div className="container-x flex flex-col items-start justify-between gap-3 border-t border-line py-6 text-xs text-muted sm:flex-row sm:items-center">
         <span>© {new Date().getFullYear()} {store.name}. All rights reserved.</span>
-        <span className="flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-2">
           Payments by
           <span className="rounded bg-white px-2 py-1 font-semibold text-ink">MTN MoMo</span>
           <span className="rounded bg-white px-2 py-1 font-semibold text-ink">Telecel Cash</span>
           <span className="rounded bg-white px-2 py-1 font-semibold text-ink">AT Money</span>
+          <span className="rounded bg-white px-2 py-1 font-semibold text-ink">Visa</span>
+          <span className="rounded bg-white px-2 py-1 font-semibold text-ink">Mastercard</span>
         </span>
       </div>
     </footer>

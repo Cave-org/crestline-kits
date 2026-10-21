@@ -4,7 +4,8 @@ import { ProductImage } from "@/components/product-image";
 import { ProductRow } from "@/components/product-row";
 import { getCategories, listProducts } from "@/lib/catalog";
 import { store } from "@/lib/config";
-import { formatMoney } from "@/lib/format";
+import { Money, Price } from "@/components/market";
+import { getMarket } from "@/lib/market-server";
 
 
 const panelColors = ["#a3245a", "#f2b705", "#0b0b0b", "#f2b705", "#a3245a"];
@@ -16,12 +17,14 @@ const collectionColors: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [featured, national, retro, categories] = await Promise.all([
+  const [featured, national, retro, categories, { country }] = await Promise.all([
     listProducts({ featured: true, limit: 8 }),
     listProducts({ category: "national-teams", limit: 8 }),
     listProducts({ category: "retro", limit: 8 }),
     getCategories(),
+    getMarket(),
   ]);
+  const inGhana = country === "GH";
   const heroShirts = featured.slice(0, 5);
   const spotlight = heroShirts[2] ?? heroShirts[0];
 
@@ -65,7 +68,9 @@ export default async function HomePage() {
               className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-16 text-white md:px-8 md:pb-6"
             >
               <span className="font-display text-2xl sm:text-3xl md:text-4xl">{spotlight.name}</span>
-              <span className="shrink-0 text-sm font-semibold">{formatMoney(spotlight.price)}</span>
+              <span className="shrink-0 text-sm font-semibold">
+                <Price product={spotlight} />
+              </span>
             </Link>
           )}
         </div>
@@ -120,7 +125,7 @@ export default async function HomePage() {
               Your number.
             </h2>
             <p className="max-w-md text-white/75">
-              Add official-style name and number printing to any matchday jersey for {formatMoney(store.customizationFee)}.
+              Add official-style name and number printing to any matchday jersey for <Money ghs={store.customizationFee} usd={store.customizationFeeUsd} />.
               Printed in Accra and ready in 2–3 days.
             </p>
             <Link href="/shop" className="btn mt-2 w-fit bg-accent text-ink hover:bg-accent/90">
@@ -147,8 +152,15 @@ export default async function HomePage() {
       <section className="container-x mt-16 md:mt-20">
         <div className="grid grid-cols-2 gap-6 rounded-lg bg-tile p-6 md:grid-cols-4 md:p-8">
           {[
-            { icon: Smartphone, title: "Pay with Mobile Money", text: "MTN, Telecel and AirtelTigo" },
-            { icon: Truck, title: "Delivery across Ghana", text: "Free in Accra over GH₵ 1,000" },
+            ...(inGhana
+              ? [
+                  { icon: Smartphone, title: "Pay with Mobile Money", text: "MTN, Telecel, AirtelTigo or card" },
+                  { icon: Truck, title: "Delivery across Ghana", text: "Free in Accra over GH₵ 1,000" },
+                ]
+              : [
+                  { icon: Smartphone, title: "Pay by card", text: "Visa and Mastercard via Paystack" },
+                  { icon: Truck, title: "We ship to you", text: "Delivery arranged after you order" },
+                ]),
             { icon: RefreshCw, title: "Easy size exchanges", text: "Within 7 days, unprinted" },
             { icon: BadgeCheck, title: "Quality checked", text: "Every shirt inspected before dispatch" },
           ].map(({ icon: Icon, title, text }) => (

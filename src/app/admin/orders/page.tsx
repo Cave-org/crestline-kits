@@ -1,3 +1,4 @@
+import { countryName } from "@/lib/countries";
 import Link from "next/link";
 import clsx from "clsx";
 import { desc, eq, ilike, or, and, type SQL } from "drizzle-orm";
@@ -73,9 +74,9 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                     {o.name}
                     <p className="text-[12px] text-muted">{o.phone}</p>
                   </td>
-                  <td className="px-5 py-3 text-muted">{o.deliveryMethod === "pickup" ? "Pickup" : `${o.city}, ${o.region}`}</td>
+                  <td className="px-5 py-3 text-muted">{o.deliveryMethod === "pickup" ? "Pickup" : `${o.city}, ${o.country === "GH" ? o.region : countryName(o.country)}`}</td>
                   <td className="px-5 py-3"><StatusBadge status={o.status} /></td>
-                  <td className="px-5 py-3 text-right font-medium">{formatMoney(o.total)}</td>
+                  <td className="px-5 py-3 text-right font-medium">{formatMoney(o.total, o.currency)}</td>
                 </tr>
               ))}
             </tbody>

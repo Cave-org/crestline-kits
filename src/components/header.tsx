@@ -5,6 +5,7 @@ import { Logo } from "./logo";
 import { CartButton, MobileMenu, SearchBox } from "./header-client";
 import { getCurrentUser } from "@/lib/auth";
 import { store } from "@/lib/config";
+import { getCountry } from "@/lib/market-server";
 
 export const navLinks = [
   { href: "/shop?new=1", label: "New Arrivals" },
@@ -15,13 +16,15 @@ export const navLinks = [
 ];
 
 export async function Header() {
-  const user = await getCurrentUser();
+  const [user, country] = await Promise.all([getCurrentUser(), getCountry()]);
+  const announcement =
+    country === "GH" ? store.announcement : "We ship outside Ghana · Pay by card · Delivery arranged after you order";
   return (
     <>
       <div className="bg-ink text-white">
         <div className="container-x flex h-10 items-center justify-center gap-3 text-center text-[13px]">
           <span className="hidden h-1.5 w-1.5 shrink-0 rounded-full bg-accent sm:block" />
-          <span className="truncate">{store.announcement}</span>
+          <span className="truncate">{announcement}</span>
           <Link href="/shop" className="hidden shrink-0 font-display text-sm tracking-wide text-accent sm:inline">
             Shop now →
           </Link>

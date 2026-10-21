@@ -30,6 +30,8 @@ const productSchema = z.object({
   categoryId: z.string().min(1, "Choose a category"),
   price: z.string().refine((v) => toPesewas(v) > 0, "Enter a price"),
   compareAtPrice: z.string().optional(),
+  priceUsd: z.string().optional(),
+  compareAtPriceUsd: z.string().optional(),
   color: z.string().trim().max(40).optional(),
   description: z.string().trim().min(10, "Write a short description"),
   details: z.string().optional(),
@@ -49,6 +51,8 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
   if (images.length === 0) return { error: "Add at least one product image" };
 
   const compareAt = v.compareAtPrice ? toPesewas(v.compareAtPrice) : 0;
+  const priceUsd = v.priceUsd ? toPesewas(v.priceUsd) : 0; // same maths: dollars → cents
+  const compareAtUsd = v.compareAtPriceUsd ? toPesewas(v.compareAtPriceUsd) : 0;
   const data = {
     name: v.name,
     team: v.team,
@@ -58,6 +62,8 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
     categoryId: v.categoryId,
     price: toPesewas(v.price),
     compareAtPrice: compareAt > 0 ? compareAt : null,
+    priceUsd: priceUsd > 0 ? priceUsd : null,
+    compareAtPriceUsd: priceUsd > 0 && compareAtUsd > 0 ? compareAtUsd : null,
     color: v.color || null,
     description: v.description,
     details: (v.details ?? "")

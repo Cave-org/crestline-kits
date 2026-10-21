@@ -12,7 +12,8 @@ export type CartItem = {
   image: string | null;
   size: string;
   color: string | null;
-  price: number; // pesewas, a display snapshot — the server reprices at checkout
+  price: number; // GH₵ price in pesewas, a display snapshot — the server reprices at checkout
+  priceUsd?: number | null; // USD price in cents for buyers outside Ghana/Nigeria (empty = converted)
   quantity: number;
   customName?: string | null;
   customNumber?: string | null;

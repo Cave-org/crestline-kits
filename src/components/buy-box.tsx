@@ -8,7 +8,7 @@ import { QtyStepper } from "./qty-stepper";
 import { useCart } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
 import { useHydrated } from "@/lib/use-hydrated";
-import { formatMoney } from "@/lib/format";
+import { useMoney } from "./market";
 
 type Props = {
   product: {
@@ -18,13 +18,17 @@ type Props = {
     image: string | null;
     color: string | null;
     price: number;
+    compareAtPrice: number | null;
+    priceUsd: number | null;
+    compareAtPriceUsd: number | null;
     allowCustomization: boolean;
   };
   variants: { id: string; size: string; stock: number }[];
-  customizationFee: number;
 };
 
-export function BuyBox({ product, variants, customizationFee }: Props) {
+export function BuyBox({ product, variants }: Props) {
+  const money = useMoney();
+  const customizationFee = money.printing;
   const router = useRouter();
   const add = useCart((s) => s.add);
   const hydrated = useHydrated();
@@ -42,7 +46,7 @@ export function BuyBox({ product, variants, customizationFee }: Props) {
 
   const variant = variants.find((v) => v.id === variantId);
   const soldOut = !firstAvailable;
-  const unit = product.price + (printing && (customName || customNumber) ? customizationFee : 0);
+  const unit = money.price(product).price + (printing && (customName || customNumber) ? customizationFee : 0);
 
   function addToCart() {
     setError("");
@@ -57,6 +61,7 @@ export function BuyBox({ product, variants, customizationFee }: Props) {
       size: variant.size,
       color: product.color,
       price: product.price,
+      priceUsd: product.priceUsd,
       quantity: qty,
       customName: printing ? customName.trim().toUpperCase() || null : null,
       customNumber: printing ? customNumber.trim() || null : null,
@@ -102,7 +107,7 @@ export function BuyBox({ product, variants, customizationFee }: Props) {
           <label className="flex cursor-pointer items-center justify-between gap-4">
             <span>
               <span className="block text-sm font-semibold">Add name & number</span>
-              <span className="text-[13px] text-muted">+{formatMoney(customizationFee)} per shirt</span>
+              <span className="text-[13px] text-muted">+{money.format(customizationFee)} per shirt</span>
             </span>
             <input
               type="checkbox"
@@ -162,7 +167,7 @@ export function BuyBox({ product, variants, customizationFee }: Props) {
           className="btn btn-primary flex-1"
         >
           {added ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
-          {soldOut ? "Sold out" : added ? "Added to cart" : `Add to cart · ${formatMoney(unit * qty)}`}
+          {soldOut ? "Sold out" : added ? "Added to cart" : `Add to cart · ${money.format(unit * qty)}`}
         </button>
         <button
           type="button"

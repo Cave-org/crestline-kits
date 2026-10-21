@@ -12,7 +12,11 @@ export default async function AdminDashboard() {
 
   const [[sales], [toFulfil], lowStock, recent] = await Promise.all([
     db
-      .select({ revenue: sql<number>`coalesce(sum(${orders.total}), 0)::int`, count: sql<number>`count(*)::int` })
+      .select({
+        revenue: sql<number>`coalesce(sum(${orders.total}) filter (where ${orders.currency} = 'GHS'), 0)::int`,
+        revenueUsd: sql<number>`coalesce(sum(${orders.total}) filter (where ${orders.currency} = 'USD'), 0)::int`,
+        count: sql<number>`count(*)::int`,
+      })
       .from(orders)
       .where(and(inArray(orders.status, [...PAID_STATES]), gte(orders.createdAt, since))),
     db
@@ -35,7 +39,11 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-semibold">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Sales, last 30 days" value={formatMoney(sales.revenue)} />
+        <Stat
+          label="Sales, last 30 days"
+          value={formatMoney(sales.revenue)}
+          note={sales.revenueUsd > 0 ? `+ ${formatMoney(sales.revenueUsd, "USD")} international` : undefined}
+        />
         <Stat label="Paid orders, last 30 days" value={String(sales.count)} />
         <Stat label="Waiting to ship" value={String(toFulfil.count)} href="/admin/orders?status=PAID" />
       </div>
@@ -60,7 +68,7 @@ export default async function AdminDashboard() {
                       </td>
                       <td className="py-3 pr-3 text-muted">{formatDate(o.createdAt)}</td>
                       <td className="py-3 pr-3"><StatusBadge status={o.status} /></td>
-                      <td className="py-3 text-right font-medium">{formatMoney(o.total)}</td>
+                      <td className="py-3 text-right font-medium">{formatMoney(o.total, o.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -93,11 +101,12 @@ export default async function AdminDashboard() {
   );
 }
 
-function Stat({ label, value, href }: { label: string; value: string; href?: string }) {
+function Stat({ label, value, href, note }: { label: string; value: string; href?: string; note?: string }) {
   const body = (
     <>
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+      {note && <p className="mt-1 text-[13px] text-muted">{note}</p>}
     </>
   );
   return href ? (

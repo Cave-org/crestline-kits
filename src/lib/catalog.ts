@@ -12,6 +12,8 @@ export type ProductCard = {
   kitType: string;
   price: number;
   compareAtPrice: number | null;
+  priceUsd: number | null;
+  compareAtPriceUsd: number | null;
   images: string[];
   isNew: boolean;
   inStock: boolean;
@@ -26,6 +28,8 @@ const cardColumns = {
   kitType: products.kitType,
   price: products.price,
   compareAtPrice: products.compareAtPrice,
+  priceUsd: products.priceUsd,
+  compareAtPriceUsd: products.compareAtPriceUsd,
   images: products.images,
   isNew: products.isNew,
   categorySlug: categories.slug,

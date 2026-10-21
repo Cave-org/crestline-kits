@@ -3,6 +3,7 @@ import { formatMoney } from "@/lib/format";
 import type { Order, OrderItem } from "@/db/schema";
 
 export function OrderSummary({ order }: { order: Order & { items: OrderItem[] } }) {
+  const fmt = (n: number) => formatMoney(n, order.currency);
   return (
     <div className="rounded-xl border border-line p-5 md:p-6">
       <ul className="space-y-4">
@@ -16,19 +17,25 @@ export function OrderSummary({ order }: { order: Order & { items: OrderItem[] } 
                 {(i.customName || i.customNumber) && ` · Printing: ${[i.customName, i.customNumber].filter(Boolean).join(" ")}`}
               </p>
             </div>
-            <p className="text-sm font-medium">{formatMoney((i.unitPrice + i.customizationFee) * i.quantity)}</p>
+            <p className="text-sm font-medium">{fmt((i.unitPrice + i.customizationFee) * i.quantity)}</p>
           </li>
         ))}
       </ul>
       <dl className="mt-5 space-y-2 border-t border-line pt-5 text-sm">
-        <Line label="Subtotal" value={formatMoney(order.subtotal)} />
-        {order.customizationTotal > 0 && <Line label="Printing" value={formatMoney(order.customizationTotal)} />}
-        <Line label="Delivery" value={order.deliveryFee === 0 ? "Free" : formatMoney(order.deliveryFee)} />
-        {order.discount > 0 && <Line label={`Discount${order.promoCode ? ` (${order.promoCode})` : ""}`} value={`- ${formatMoney(order.discount)}`} />}
+        <Line label="Subtotal" value={fmt(order.subtotal)} />
+        {order.customizationTotal > 0 && <Line label="Printing" value={fmt(order.customizationTotal)} />}
+        <Line
+          label="Delivery"
+          value={order.country !== "GH" ? "Arranged separately" : order.deliveryFee === 0 ? "Free" : fmt(order.deliveryFee)}
+        />
+        {order.discount > 0 && <Line label={`Discount${order.promoCode ? ` (${order.promoCode})` : ""}`} value={`- ${fmt(order.discount)}`} />}
         <div className="flex justify-between border-t border-line pt-3 text-base font-semibold">
           <dt>Total</dt>
-          <dd>{formatMoney(order.total)}</dd>
+          <dd>{fmt(order.total)}</dd>
         </div>
+        {order.currency !== "GHS" && order.chargeAmount != null && (
+          <p className="text-right text-[12px] text-muted">Charged as {formatMoney(order.chargeAmount)}</p>
+        )}
       </dl>
     </div>
   );

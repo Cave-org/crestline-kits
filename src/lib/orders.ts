@@ -7,7 +7,13 @@ import { orders, productVariants, promoCodes } from "@/db/schema";
  * Marks an order as paid exactly once, then takes the stock and counts the promo use.
  * Safe to call from both the payment redirect page and the webhook.
  */
-export async function markOrderPaid(reference: string, amount: number, channel: string, paidAt?: string | null) {
+export async function markOrderPaid(
+  reference: string,
+  amount: number,
+  currency: string,
+  channel: string,
+  paidAt?: string | null,
+) {
   return db.transaction(async (tx) => {
     const order = await tx.query.orders.findFirst({
       where: eq(orders.paymentRef, reference),
@@ -15,7 +21,9 @@ export async function markOrderPaid(reference: string, amount: number, channel: 
     });
     if (!order) return { ok: false as const, reason: "Order not found" };
     if (order.status !== "PENDING") return { ok: true as const, order, alreadyPaid: true };
-    if (amount !== order.total) return { ok: false as const, reason: "Amount paid does not match the order" };
+    // Paystack always charges in GH₵ (see chargeAmount on the order)
+    if (currency !== "GHS" || amount !== (order.chargeAmount ?? order.total))
+      return { ok: false as const, reason: "Amount paid does not match the order" };
 
     const claimed = await tx
       .update(orders)

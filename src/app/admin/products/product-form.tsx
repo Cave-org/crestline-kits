@@ -3,7 +3,9 @@
 import { useActionState, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { ProductImage } from "@/components/product-image";
-import { kitTypes, sizes } from "@/lib/config";
+import { kitTypes, sizes, store } from "@/lib/config";
+
+const ghsPerUsd = store.ghsPerUsd;
 import { saveProduct } from "../actions";
 
 type ProductInput = {
@@ -16,6 +18,8 @@ type ProductInput = {
   categoryId: string;
   price: number;
   compareAtPrice: number | null;
+  priceUsd: number | null;
+  compareAtPriceUsd: number | null;
   color: string | null;
   description: string;
   details: string[];
@@ -144,6 +148,19 @@ export function ProductForm({ categories, product }: { categories: { id: string;
           </Field>
           <Field label="Was price (GH₵, optional)">
             <input name="compareAtPrice" inputMode="decimal" defaultValue={cedis(product?.compareAtPrice)} className="input" placeholder="Shows a sale badge" />
+          </Field>
+        </div>
+        <p className="mt-5 text-sm font-medium">International price</p>
+        <p className="mt-0.5 text-[12px] text-muted">
+          What buyers outside Ghana and Nigeria pay, in US dollars. Leave it empty to convert the GH₵ price automatically
+          (at GH₵ {ghsPerUsd} to $1, rounded up to a whole dollar).
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label="Price (US$)">
+            <input name="priceUsd" inputMode="decimal" defaultValue={cedis(product?.priceUsd)} className="input" placeholder="35.00" />
+          </Field>
+          <Field label="Was price (US$, optional)">
+            <input name="compareAtPriceUsd" inputMode="decimal" defaultValue={cedis(product?.compareAtPriceUsd)} className="input" placeholder="Shows a sale badge" />
           </Field>
         </div>
       </Card>

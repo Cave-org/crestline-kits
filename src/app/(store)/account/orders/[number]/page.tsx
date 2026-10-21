@@ -1,3 +1,4 @@
+import { countryName } from "@/lib/countries";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -32,7 +33,7 @@ export default async function OrderPage({ params }: { params: Promise<{ number: 
       <div className="mt-6 rounded-xl bg-tile p-5 text-sm">
         <p className="font-semibold">{order.deliveryMethod === "pickup" ? "Pickup" : "Delivery address"}</p>
         <p className="mt-1 text-muted">
-          {order.deliveryMethod === "pickup" ? "We'll call you when it's ready." : `${order.address}, ${order.city}, ${order.region}`}
+          {order.deliveryMethod === "pickup" ? "We'll call you when it's ready." : [order.address, order.city, order.region, order.country !== "GH" && countryName(order.country)].filter(Boolean).join(", ")}
         </p>
       </div>
     </div>

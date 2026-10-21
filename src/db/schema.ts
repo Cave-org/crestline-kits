@@ -1,5 +1,5 @@
 // Crestline Kits database schema.
-// All money values are integers in pesewas (GH₵ 1.00 = 100).
+// Money values are integers in the smallest unit: pesewas for GH₵ (GH₵ 1.00 = 100), cents for USD.
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
@@ -68,6 +68,9 @@ export const products = pgTable(
     color: text("color"),
     price: integer("price").notNull(),
     compareAtPrice: integer("compare_at_price"),
+    // Price for buyers outside Ghana and Nigeria, in US cents. Empty = converted from the GH₵ price.
+    priceUsd: integer("price_usd"),
+    compareAtPriceUsd: integer("compare_at_price_usd"),
     images: text("images").array().notNull().default(sql`'{}'::text[]`),
     featured: boolean("featured").notNull().default(false),
     isNew: boolean("is_new").notNull().default(true),
@@ -108,6 +111,8 @@ export const orders = pgTable(
     address: text("address").notNull(),
     city: text("city").notNull(),
     region: text("region").notNull(),
+    country: text("country").notNull().default("GH"), // ISO code, e.g. GH, NG, GB
+    currency: text("currency").notNull().default("GHS"), // GHS or USD; every amount on the order is in this
     deliveryMethod: text("delivery_method").notNull(), // "delivery" | "pickup"
     notes: text("notes"),
     subtotal: integer("subtotal").notNull(),
@@ -115,6 +120,9 @@ export const orders = pgTable(
     deliveryFee: integer("delivery_fee").notNull(),
     discount: integer("discount").notNull().default(0),
     total: integer("total").notNull(),
+    // What Paystack charges, always in pesewas. Same as total for GH₵ orders; for USD orders it's the
+    // total converted to GH₵, because Paystack only charges Ghana businesses in GH₵.
+    chargeAmount: integer("charge_amount"),
     promoCode: text("promo_code"),
     status: orderStatusEnum("status").notNull().default("PENDING"),
     paymentRef: text("payment_ref").unique(),

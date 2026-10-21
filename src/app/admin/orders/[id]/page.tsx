@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/db/schema";
 import { formatDate } from "@/lib/format";
+import { countryName } from "@/lib/countries";
 import { OrderSummary, StatusBadge, statusLabels } from "@/components/order-summary";
 import { updateOrderStatus } from "../../actions";
 
@@ -69,7 +70,23 @@ export default async function AdminOrder({ params }: { params: Promise<{ id: str
             {order.deliveryMethod === "pickup" ? (
               <p className="mt-2 text-muted">Customer will collect · {order.region}</p>
             ) : (
-              <p className="mt-2 text-muted">{order.address}<br />{order.city}, {order.region}</p>
+              <p className="mt-2 text-muted">
+                {order.address}
+                <br />
+                {order.city}, {order.region}
+                {order.country !== "GH" && (
+                  <>
+                    <br />
+                    <strong className="text-ink">{countryName(order.country)}</strong>
+                  </>
+                )}
+              </p>
+            )}
+            {order.country !== "GH" && (
+              <p className="mt-3 rounded bg-accent/15 p-3 text-ink">
+                International order, paid in {order.currency}. Delivery hasn't been charged: contact the customer with the
+                shipping cost and options.
+              </p>
             )}
             {order.notes && <p className="mt-3 rounded bg-tile p-3">“{order.notes}”</p>}
           </section>
