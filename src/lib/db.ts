@@ -9,6 +9,12 @@ function createPool() {
   const pool = new Pool({
     connectionString: url,
     max: process.env.NODE_ENV === "production" ? 5 : 10,
+    // Neon puts the database to sleep when nobody visits for a while; waking it can take a few
+    // seconds, so wait up to 15 s for a connection instead of failing early.
+    connectionTimeoutMillis: 15_000,
+    // Close idle connections before Neon drops them, so we never reuse a dead one.
+    idleTimeoutMillis: 10_000,
+    keepAlive: true,
   });
   if (!url) {
     // No error while the app is being built; only when a page actually needs the database.
