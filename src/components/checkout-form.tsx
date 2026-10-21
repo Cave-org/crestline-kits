@@ -7,11 +7,12 @@ import { CreditCard, Globe, Lock, Smartphone } from "lucide-react";
 import { ProductImage } from "./product-image";
 import { PageSkeleton } from "./skeletons";
 import { cartLines, cartUnit } from "./cart-view";
-import { CountrySelect, useMarket, useMoney } from "./market";
+import { useMarket, useMoney } from "./market";
 import { useCart } from "@/store/cart";
 import { useHydrated } from "@/lib/use-hydrated";
-import { deliveryFeeFor, regions } from "@/lib/config";
-import { priceFor, usdToGhs } from "@/lib/market";
+import { regions } from "@/lib/config";
+import { buyerCurrency, ghanaDeliveryFee, priceFor, usdToGhs } from "@/lib/market";
+import { countryCodes, countryOptions } from "@/lib/countries";
 import { formatMoney } from "@/lib/format";
 
 type Defaults = { email: string; name: string; phone: string };
@@ -20,8 +21,11 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
   const hydrated = useHydrated();
   const items = useCart((s) => s.items);
   const promoCode = useCart((s) => s.promoCode);
-  const { country } = useMarket();
-  const money = useMoney();
+  // Prices follow where the buyer is (detected, can't be changed). The delivery country only
+  // matters for the address, and delivering outside Ghana/Nigeria always uses USD prices.
+  const { country: ipCountry, currency: ipCurrency } = useMarket();
+  const [country, setCountry] = useState(countryCodes.includes(ipCountry) ? ipCountry : "GH");
+  const money = useMoney(buyerCurrency(ipCountry, country));
   const ghana = country === "GH";
 
   const [form, setForm] = useState({
@@ -71,7 +75,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
 
   const subtotal = items.reduce((s, i) => s + priceFor({ price: i.price, priceUsd: i.priceUsd }, money.currency).price * i.quantity, 0);
   const printing = items.reduce((s, i) => s + (i.customName || i.customNumber ? money.printing * i.quantity : 0), 0);
-  const delivery = ghana ? deliveryFeeFor(form.deliveryMethod, form.region, subtotal) : 0;
+  const delivery = ghanaDeliveryFee(country, money.currency, form.deliveryMethod, form.region, subtotal);
   const total = Math.max(0, subtotal + printing + delivery - discount);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -138,7 +142,16 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
             <h2 className="text-lg font-semibold">Delivery</h2>
             <div className="mt-4">
               <label className="label" htmlFor="country">Country</label>
-              <CountrySelect id="country" label="Country" className={inputCls("country")} />
+              <select id="country" className={inputCls("country")} value={country} onChange={(e) => setCountry(e.target.value)}>
+                {countryOptions.map(([code, name]) => (
+                  <option key={code} value={code}>{name}</option>
+                ))}
+              </select>
+              {money.currency !== ipCurrency && (
+                <p className="mt-2 text-[13px] text-muted">
+                  Prices are in US dollars for delivery outside Ghana and Nigeria.
+                </p>
+              )}
             </div>
 
             {ghana ? (

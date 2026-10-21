@@ -1,14 +1,10 @@
 import "server-only";
-import { cookies, headers } from "next/headers";
-import { COUNTRY_COOKIE, currencyFor, normalizeCountry } from "./market";
+import { headers } from "next/headers";
+import { currencyFor, ipCountryFrom } from "./market";
 
-/**
- * The visitor's country: the one they picked (saved in a cookie), otherwise the country
- * Vercel detects from their connection, otherwise Ghana.
- */
+/** The visitor's country, detected by Vercel from their connection. Visitors can't change it. */
 export async function getCountry() {
-  const [c, h] = await Promise.all([cookies(), headers()]);
-  return normalizeCountry(c.get(COUNTRY_COOKIE)?.value || h.get("x-vercel-ip-country") || "GH");
+  return ipCountryFrom((await headers()).get("x-vercel-ip-country"));
 }
 
 export async function getMarket() {

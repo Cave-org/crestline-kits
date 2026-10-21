@@ -1,39 +1,25 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext } from "react";
 import clsx from "clsx";
 import { formatMoney } from "@/lib/format";
-import { COUNTRY_COOKIE, currencyFor, priceFor, printingFee, type Currency, type Priceable } from "@/lib/market";
-import { countryOptions } from "@/lib/countries";
+import { currencyFor, priceFor, printingFee, type Currency, type Priceable } from "@/lib/market";
 
-type Ctx = { country: string; currency: Currency; setCountry: (code: string) => void };
+type Ctx = { country: string; currency: Currency };
 
-const MarketCtx = createContext<Ctx>({ country: "GH", currency: "GHS", setCountry: () => {} });
+const MarketCtx = createContext<Ctx>({ country: "GH", currency: "GHS" });
 
-export function MarketProvider({ country: initial, children }: { country: string; children: React.ReactNode }) {
-  const router = useRouter();
-  const [country, setLocal] = useState(initial);
-  useEffect(() => setLocal(initial), [initial]);
-
-  const setCountry = useCallback(
-    (code: string) => {
-      document.cookie = `${COUNTRY_COOKIE}=${code}; path=/; max-age=31536000; samesite=lax`;
-      const changed = currencyFor(code) !== currencyFor(country);
-      setLocal(code);
-      if (changed) router.refresh(); // re-render server parts (shop filters, notices) in the new currency
-    },
-    [router, country],
-  );
-
-  return <MarketCtx.Provider value={{ country, currency: currencyFor(country), setCountry }}>{children}</MarketCtx.Provider>;
+/** country = where the visitor is, detected from their connection (set once by the store layout). */
+export function MarketProvider({ country, children }: { country: string; children: React.ReactNode }) {
+  return <MarketCtx.Provider value={{ country, currency: currencyFor(country) }}>{children}</MarketCtx.Provider>;
 }
 
 export const useMarket = () => useContext(MarketCtx);
 
-/** Prices and formatting for the visitor's currency. */
-export function useMoney() {
-  const { currency } = useMarket();
+/** Prices and formatting in the visitor's currency (or the one passed in, e.g. at checkout). */
+export function useMoney(override?: Currency) {
+  const market = useMarket();
+  const currency = override ?? market.currency;
   return {
     currency,
     format: (amount: number) => formatMoney(amount, currency),
@@ -69,24 +55,4 @@ export function useSalePercent(product: Priceable) {
 export function Money({ ghs, usd }: { ghs: number; usd?: number }) {
   const { currency, format } = useMoney();
   return <>{format(currency === "GHS" ? ghs : (usd ?? priceFor({ price: ghs }, "USD").price))}</>;
-}
-
-/** "Ship to" country picker. Changing it switches the prices across the site. */
-export function CountrySelect({ className, id, label = "Ship to" }: { className?: string; id?: string; label?: string }) {
-  const { country, setCountry } = useMarket();
-  return (
-    <select
-      id={id}
-      aria-label={label}
-      value={country}
-      onChange={(e) => setCountry(e.target.value)}
-      className={className}
-    >
-      {countryOptions.map(([code, name]) => (
-        <option key={code} value={code}>
-          {name}
-        </option>
-      ))}
-    </select>
-  );
 }

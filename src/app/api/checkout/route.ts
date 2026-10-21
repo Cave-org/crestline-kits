@@ -8,7 +8,7 @@ import { initializeTransaction } from "@/lib/paystack";
 import { getSession } from "@/lib/auth";
 import { regions } from "@/lib/config";
 import { orderNumber } from "@/lib/format";
-import { paymentChannels } from "@/lib/market";
+import { ipCountryFrom, paymentChannels } from "@/lib/market";
 import { countryCodes } from "@/lib/countries";
 
 const body = z
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       lines: input.lines,
       promoCode: input.promoCode,
       country: input.country,
+      ipCountry: ipCountryFrom(req.headers.get("x-vercel-ip-country")),
       deliveryMethod: input.deliveryMethod,
       region: input.region,
     });

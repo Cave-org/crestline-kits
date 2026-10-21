@@ -1,12 +1,13 @@
 // Which prices a buyer sees. Used on both the server and in the browser.
 //   Ghana and Nigeria  → GH₵ prices
 //   Everywhere else    → US dollar prices (each jersey's own USD price, or a converted one)
-import { store } from "./config";
+// The country comes from the visitor's connection (Vercel's x-vercel-ip-country header), so buyers
+// can't pick it. GH₵ prices also require delivery to Ghana or Nigeria.
+import { deliveryFeeFor, store } from "./config";
 import { countryCodes } from "./countries";
 
 export type Currency = "GHS" | "USD";
 
-export const COUNTRY_COOKIE = "ck_country";
 export const LOCAL_COUNTRIES = ["GH", "NG"];
 
 export function normalizeCountry(code?: string | null) {
@@ -15,6 +16,16 @@ export function normalizeCountry(code?: string | null) {
 }
 
 export const currencyFor = (country: string): Currency => (LOCAL_COUNTRIES.includes(country) ? "GHS" : "USD");
+
+/** The visitor's country from the connection. No header (local development) counts as Ghana. */
+export const ipCountryFrom = (header?: string | null) => (header ?? "").trim().toUpperCase() || "GH";
+
+/** GH₵ only when the buyer is in Ghana/Nigeria AND delivering to Ghana/Nigeria; otherwise USD. */
+export function buyerCurrency(ipCountry: string, deliveryCountry?: string | null): Currency {
+  if (currencyFor(ipCountry) === "USD") return "USD";
+  if (deliveryCountry && currencyFor(deliveryCountry) === "USD") return "USD";
+  return "GHS";
+}
 
 /** GH₵ (pesewas) → US cents, rounded up to a whole dollar. */
 export const ghsToUsd = (pesewas: number) => Math.ceil(pesewas / store.ghsPerUsd / 100) * 100;
@@ -42,4 +53,20 @@ export const printingFee = (currency: Currency) =>
 /** Paystack payment options for each country. */
 export function paymentChannels(country: string) {
   return country === "GH" ? ["mobile_money", "card"] : ["card"];
+}
+
+/**
+ * Delivery fee in the order's currency. Only deliveries inside Ghana are charged at checkout
+ * (fees and the free-delivery threshold are set in GH₵, so they're converted for USD orders).
+ */
+export function ghanaDeliveryFee(
+  country: string,
+  currency: Currency,
+  method = "delivery",
+  region = "Greater Accra",
+  subtotal: number,
+) {
+  if (country !== "GH") return 0;
+  const fee = deliveryFeeFor(method, region, currency === "GHS" ? subtotal : usdToGhs(subtotal));
+  return currency === "GHS" ? fee : ghsToUsd(fee);
 }

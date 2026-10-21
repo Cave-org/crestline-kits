@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 import { store } from "@/lib/config";
-import { CountrySelect } from "./market";
 
 const cols = [
   {
@@ -43,10 +42,6 @@ export function Footer() {
           <p className="mt-4 text-sm text-muted">
             {store.tagline}. Delivered across Ghana and beyond, paid securely with Mobile Money or card.
           </p>
-          <label className="mt-5 flex items-center gap-2 text-sm">
-            <span className="text-muted">Shipping to</span>
-            <CountrySelect className="w-48 min-w-0 rounded-md border border-line bg-white px-2.5 py-1.5 text-sm outline-none focus:border-ink" />
-          </label>
           <p className="mt-6 text-sm">
             <a href={`mailto:${store.email}`} className="underline underline-offset-4">
               {store.email}

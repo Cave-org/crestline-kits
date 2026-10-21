@@ -3,8 +3,7 @@ import { z } from "zod";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { productVariants, promoCodes } from "@/db/schema";
-import { deliveryFeeFor } from "./config";
-import { currencyFor, ghsToUsd, normalizeCountry, priceFor, printingFee, usdToGhs, type Currency } from "./market";
+import { buyerCurrency, ghanaDeliveryFee, ghsToUsd, normalizeCountry, priceFor, printingFee, usdToGhs, type Currency } from "./market";
 import { formatMoney } from "./format";
 
 export const cartLineSchema = z.object({
@@ -57,13 +56,14 @@ export async function validatePromo(code: string | null | undefined, subtotal: n
 export async function priceCart(opts: {
   lines: CartLineInput[];
   promoCode?: string | null;
-  country?: string;
+  country?: string; // delivery country
+  ipCountry: string; // where the buyer is, from their connection
   deliveryMethod?: string;
   region?: string;
 }) {
   if (opts.lines.length === 0) throw new PricingError("Your cart is empty");
-  const country = normalizeCountry(opts.country);
-  const currency = currencyFor(country);
+  const country = normalizeCountry(opts.country ?? opts.ipCountry);
+  const currency = buyerCurrency(opts.ipCountry, country);
 
   const variants = await db.query.productVariants.findMany({
     where: inArray(
@@ -111,8 +111,7 @@ export async function priceCart(opts: {
   const customizationTotal = items.reduce((s, i) => s + i.customizationFee * i.quantity, 0);
   const { promo, discount } = await validatePromo(opts.promoCode, subtotal, currency);
   // Outside Ghana, delivery is arranged with the buyer after the order, so it isn't charged here
-  const deliveryFee =
-    country === "GH" ? deliveryFeeFor(opts.deliveryMethod ?? "delivery", opts.region ?? "Greater Accra", subtotal) : 0;
+  const deliveryFee = ghanaDeliveryFee(country, currency, opts.deliveryMethod, opts.region, subtotal);
   const total = Math.max(0, subtotal + customizationTotal + deliveryFee - discount);
   const chargeAmount = currency === "GHS" ? total : usdToGhs(total);
 

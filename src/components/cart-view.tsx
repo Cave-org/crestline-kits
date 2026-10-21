@@ -10,7 +10,7 @@ import { QtyStepper } from "./qty-stepper";
 import { useCart, type CartItem } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
 import { useHydrated } from "@/lib/use-hydrated";
-import { CountrySelect, useMarket, useMoney } from "./market";
+import { useMarket, useMoney } from "./market";
 import { priceFor, printingFee, type Currency } from "@/lib/market";
 
 export function cartLines(items: CartItem[]) {
@@ -132,12 +132,7 @@ export function CartView() {
             </p>
           )}
 
-          <label className="mt-5 flex items-center justify-between gap-3 text-[15px]">
-            <span className="text-muted">Shipping to</span>
-            <CountrySelect className="max-w-[60%] rounded-md border border-line bg-white px-2.5 py-2 text-sm outline-none focus:border-ink" />
-          </label>
-
-          <dl className="mt-4 space-y-3 text-[15px]">
+          <dl className="mt-6 space-y-3 text-[15px]">
             <Row label={`${count} ${count === 1 ? "item" : "items"}`} value={money.format(subtotal)} />
             {printing > 0 && <Row label="Name & number printing" value={money.format(printing)} />}
             <Row label="Delivery" value={country === "GH" ? "At checkout" : "Arranged after order"} muted />
