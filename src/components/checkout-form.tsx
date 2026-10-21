@@ -238,7 +238,7 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
 
         <aside className="rounded-xl border border-line p-5 md:p-6 lg:sticky lg:top-24">
           <h2 className="text-lg font-semibold">Order summary</h2>
-          <ul className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-1">
+          <ul className="mt-2 max-h-80 space-y-4 overflow-y-auto pr-1 pt-2">
             {items.map((i) => (
               <li key={i.key} className="flex gap-3">
                 <div className="relative">
