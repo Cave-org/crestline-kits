@@ -17,7 +17,7 @@ const cols = [
     title: "Customer care",
     links: [
       { href: "/help#delivery", label: "Delivery" },
-      { href: "/help#returns", label: "Returns & exchanges" },
+      { href: "/shipping-and-returns", label: "Shipping & refund policy" },
       { href: "/help#sizing", label: "Size guide" },
       { href: "/help#printing", label: "Name & number printing" },
       { href: "/help#contact", label: "Contact us" },

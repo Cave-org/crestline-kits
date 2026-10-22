@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { asc } from "drizzle-orm";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { categories, products, productVariants } from "@/db/schema";
 import { formatMoney } from "@/lib/format";
@@ -72,9 +72,15 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
             Showing {list.length} of {rows.length}
           </p>
         </div>
-        <Link href="/admin/products/new" className="btn btn-primary !py-2.5">
-          <Plus className="h-4 w-4" /> Add product
-        </Link>
+        <div className="flex shrink-0 gap-2">
+          <a href="/admin/products/stock.csv" className="btn btn-outline !px-3 !py-2.5" title="Download stock list (CSV)">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Stock list</span>
+          </a>
+          <Link href="/admin/products/new" className="btn btn-primary !py-2.5">
+            <Plus className="h-4 w-4" /> Add product
+          </Link>
+        </div>
       </div>
 
       <Suspense>

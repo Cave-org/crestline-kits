@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { deliveryFees, store } from "@/lib/config";
 import { formatMoney } from "@/lib/format";
 
@@ -51,6 +52,10 @@ export default function HelpPage() {
         <p>
           Wrong size? Exchange unworn, unprinted jerseys with tags attached within 7 days of delivery. Contact us with your
           order number to arrange it. If an item arrives damaged, tell us within 48 hours and we'll replace it.
+        </p>
+        <p>
+          Full details are in our{" "}
+          <Link href="/shipping-and-returns" className="underline">shipping, returns & refund policy</Link>.
         </p>
       </Section>
 

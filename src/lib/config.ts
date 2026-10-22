@@ -12,6 +12,10 @@ export const store = {
   // Used only when a jersey has no USD price set in admin: the GH₵ price is converted
   // at this rate and rounded up to a whole dollar. Update it now and then.
   ghsPerUsd: 11.5,
+  // Delivery promises, shown on the Shipping & Returns policy page. Keep them honest.
+  supplierExtraDays: "5–10", // extra working days when a jersey has to be ordered from our supplier
+  internationalDays: "7–14", // working days for delivery outside Ghana, after the buyer pays for shipping
+  policyUpdated: "22 October 2026",
   announcement: "Free delivery in Greater Accra on orders over GH₵ 1,000 · Pay with Mobile Money",
 };
 

@@ -295,7 +295,13 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
             <Lock className="h-4 w-4" />
             {submitting ? "Starting payment…" : `Pay ${money.format(total)}`}
           </button>
-          <p className="mt-3 text-center text-[12px] text-muted">Secured by Paystack</p>
+          <p className="mt-3 text-center text-[12px] text-muted">
+            Secured by Paystack. By paying you agree to our{" "}
+            <Link href="/shipping-and-returns" target="_blank" className="underline">
+              shipping & refund policy
+            </Link>
+            .
+          </p>
         </aside>
       </form>
     </div>
