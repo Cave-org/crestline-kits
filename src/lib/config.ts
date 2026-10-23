@@ -15,7 +15,7 @@ export const store = {
   // Delivery promises, shown on the Shipping & Returns policy page. Keep them honest.
   supplierExtraDays: "5–10", // extra working days when a jersey has to be ordered from our supplier
   internationalDays: "7–14", // working days for delivery outside Ghana, after the buyer pays for shipping
-  policyUpdated: "22 October 2026",
+  policyUpdated: "23 October 2026",
   announcement: "Free delivery in Greater Accra on orders over GH₵ 1,000 · Pay with Mobile Money",
 };
 

@@ -24,6 +24,11 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
           ]}
         />
       </div>
+      <p className="mt-4 text-[13px] text-muted">
+        By creating an account you agree to our{" "}
+        <Link href="/terms" className="underline">terms of service</Link> and{" "}
+        <Link href="/privacy" className="underline">privacy policy</Link>.
+      </p>
       <p className="mt-6 text-sm text-muted">
         Already have an account?{" "}
         <Link href={`/account/login${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-ink underline underline-offset-4">

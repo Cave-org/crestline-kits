@@ -70,7 +70,12 @@ export function Footer() {
         </div>
       </div>
       <div className="container-x flex flex-col items-start justify-between gap-3 border-t border-line py-6 text-xs text-muted sm:flex-row sm:items-center">
-        <span>© {new Date().getFullYear()} {store.name}. All rights reserved.</span>
+        <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span>© {new Date().getFullYear()} {store.name}. All rights reserved.</span>
+          <Link href="/terms" className="hover:text-ink">Terms of service</Link>
+          <Link href="/privacy" className="hover:text-ink">Privacy policy</Link>
+          <Link href="/shipping-and-returns" className="hover:text-ink">Shipping &amp; refunds</Link>
+        </span>
         <span className="flex flex-wrap items-center gap-2">
           Payments by
           <span className="rounded bg-white px-2 py-1 font-semibold text-ink">MTN MoMo</span>

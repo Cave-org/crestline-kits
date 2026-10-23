@@ -297,6 +297,8 @@ export function CheckoutForm({ defaults, signedIn }: { defaults: Defaults; signe
           </button>
           <p className="mt-3 text-center text-[12px] text-muted">
             Secured by Paystack. By paying you agree to our{" "}
+            <Link href="/terms" target="_blank" className="underline">terms</Link>,{" "}
+            <Link href="/privacy" target="_blank" className="underline">privacy policy</Link> and{" "}
             <Link href="/shipping-and-returns" target="_blank" className="underline">
               shipping & refund policy
             </Link>
