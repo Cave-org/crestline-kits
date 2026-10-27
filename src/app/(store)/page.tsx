@@ -125,7 +125,7 @@ export default async function HomePage() {
               Your number.
             </h2>
             <p className="max-w-md text-white/75">
-              Add official-style name and number printing to any matchday jersey for <Money ghs={store.customizationFee} usd={store.customizationFeeUsd} />.
+              Add matchday-style name and number printing to any jersey for <Money ghs={store.customizationFee} usd={store.customizationFeeUsd} />.
               Printed in Accra and ready in 2–3 days.
             </p>
             <Link href="/shop" className="btn mt-2 w-fit bg-accent text-ink hover:bg-accent/90">

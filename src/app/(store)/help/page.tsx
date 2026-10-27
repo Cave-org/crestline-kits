@@ -48,6 +48,16 @@ export default function HelpPage() {
         </p>
       </Section>
 
+      <Section id="authenticity" title="Are your jerseys official?">
+        <p>
+          No. {store.replicaNotice}
+        </p>
+        <p>
+          They&apos;re good-quality fan versions, checked before dispatch, at a fraction of the price of official shirts.
+          If you need an official, licensed jersey, please buy it from the club or the kit brand.
+        </p>
+      </Section>
+
       <Section id="returns" title="Returns & exchanges">
         <p>
           Wrong size? Exchange unworn, unprinted jerseys with tags attached within 7 days of delivery. Contact us with your

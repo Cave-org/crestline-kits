@@ -15,7 +15,10 @@ export const store = {
   // Delivery promises, shown on the Shipping & Returns policy page. Keep them honest.
   supplierExtraDays: "5–10", // extra working days when a jersey has to be ordered from our supplier
   internationalDays: "7–14", // working days for delivery outside Ghana, after the buyer pays for shipping
-  policyUpdated: "23 October 2026",
+  policyUpdated: "27 October 2026",
+  // Shown on product pages, checkout, the footer and the terms. Our jerseys are replicas.
+  replicaNotice:
+    "All jerseys sold by Crestline Kits are replicas (fan versions). They are not official merchandise and are not made, licensed or endorsed by any club, national team, federation or kit brand.",
   announcement: "Free delivery in Greater Accra on orders over GH₵ 1,000 · Pay with Mobile Money",
 };
 

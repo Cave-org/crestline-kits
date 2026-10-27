@@ -41,9 +41,10 @@ export default function TermsPage() {
 
       <LegalSection title="3. Products and descriptions">
         <p>
-          We sell football jerseys and sportswear. Our jerseys are <strong>fan versions</strong> unless a listing clearly
-          says otherwise. We describe and photograph every product as accurately as we can, but colours can look slightly
-          different on different screens.
+          We sell football jerseys and sportswear. <strong>All our jerseys are replicas (fan versions).</strong> They are
+          not official merchandise, and they are not made, licensed or endorsed by any club, national team, federation
+          or kit brand. Quality, materials, badges and fit can differ from official shirts. We describe and photograph
+          every product as accurately as we can, but colours can look slightly different on different screens.
         </p>
         <p>
           Some jerseys are held in stock in Accra and some are ordered from our supplier after you buy. Stock shown on the
@@ -92,10 +93,11 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Team names and logos">
+      <LegalSection title="8. Replicas, team names and logos">
         <p>
           Club and national team names, crests and kit designs belong to their owners. {store.name} is an independent
-          retailer and isn&apos;t affiliated with, sponsored by or endorsed by any club, federation or kit manufacturer.
+          retailer selling replica jerseys. We aren&apos;t affiliated with, sponsored by or endorsed by any club,
+          federation or kit manufacturer, and we don&apos;t describe or sell our jerseys as authentic or official.
         </p>
       </LegalSection>
 

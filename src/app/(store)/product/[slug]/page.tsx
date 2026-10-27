@@ -53,6 +53,12 @@ export default async function ProductPage({ params }: Props) {
             <p className="mt-4">
               <Price product={product} size="lg" />
             </p>
+            <p className="mt-3 inline-flex rounded-md border border-line bg-tile px-3 py-2 text-[13px] text-ink/80">
+              <span>
+                <strong>Replica jersey</strong> (fan version). Not official club or brand merchandise.{" "}
+                <Link href="/help#authenticity" className="underline">Learn more</Link>
+              </span>
+            </p>
             <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-muted">{product.description}</p>
 
             <BuyBox

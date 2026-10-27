@@ -69,6 +69,9 @@ export function Footer() {
           ))}
         </div>
       </div>
+      <p className="container-x border-t border-line py-5 text-xs leading-relaxed text-muted">
+        {store.replicaNotice} Team names and crests belong to their owners.
+      </p>
       <div className="container-x flex flex-col items-start justify-between gap-3 border-t border-line py-6 text-xs text-muted sm:flex-row sm:items-center">
         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span>© {new Date().getFullYear()} {store.name}. All rights reserved.</span>
