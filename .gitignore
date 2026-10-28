@@ -51,3 +51,6 @@ menu.tar.gz
 filters.tar.gz
 admin-filters.tar.gz
 crestline-new-jerseys.zip
+
+# Local photo uploads from development (live photos are in Vercel Blob)
+/public/uploads

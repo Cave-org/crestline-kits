@@ -30,7 +30,7 @@ You need Node 20+ and a Postgres database. A free [Neon](https://neon.tech) or [
 npm install
 cp .env.example .env      # then fill in the values
 npm run db:push           # create the tables
-npm run db:seed           # starter catalogue, WELCOME10 promo code, admin account
+npm run db:seed           # categories, WELCOME10 promo code, admin account
 npm run dev
 ```
 
@@ -67,7 +67,7 @@ Checkout offers Mobile Money only. To add cards later, add `"card"` to `channels
 - Store name, contact details, delivery fees, free-delivery threshold, printing fee: `src/lib/config.ts`
 - Colours and fonts: `src/app/globals.css`
 - Database tables: `src/db/schema.ts` (run `npm run db:push` after changes)
-- Starter products: `src/db/seed-data.ts`. The images in `public/products` are plain placeholders, so replace them with real photos from the admin.
+- Products and their photos are managed in the admin dashboard; photos are stored in Vercel Blob, not in this repo. `npm run db:seed` only creates the categories, the WELCOME10 promo code and the admin account.
 - Copy on the help page (returns policy, delivery times): `src/app/(store)/help/page.tsx`
 
 ## Scripts
@@ -77,6 +77,6 @@ Checkout offers Mobile Money only. To add cards later, add `"card"` to `channels
 | `npm run dev` | Start the dev server |
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run db:push` | Sync the schema to the database |
-| `npm run db:seed` | Seed categories, products, promo and admin |
+| `npm run db:seed` | Create categories, promo code and admin account |
 | `npm run db:studio` | Browse the database in your browser |
 | `npm run lint` / `npm run typecheck` | Checks |
