@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { Logo } from "@/components/logo";
 import { AdminMobileBar, AdminNav } from "./nav";
+import { AdminIdleGuard } from "./idle-guard";
 import { logout } from "../(store)/account/actions";
 
 export const metadata: Metadata = { title: { default: "Admin", template: "%s | Admin" }, robots: { index: false } };
@@ -18,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-tile lg:grid lg:grid-cols-[240px_1fr]">
+      <AdminIdleGuard />
       {/* Phones and tablets: top bar with a slide-in menu */}
       <AdminMobileBar logo={<Logo />} email={admin.email} footer={signOut} />
 

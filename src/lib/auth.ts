@@ -1,57 +1,26 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignJWT, jwtVerify } from "jose";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { users } from "@/db/schema";
+import { SESSION_COOKIE, cookieOptions, signSession, verifySession, type Role } from "./session";
 
-const COOKIE = "ck_session";
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+export type { Session } from "./session";
 
-function secret() {
-  const s = process.env.AUTH_SECRET;
-  if (!s || s.length < 32) {
-    throw new Error("AUTH_SECRET must be set to a random string of at least 32 characters");
-  }
-  return new TextEncoder().encode(s);
-}
-
-export type Session = { userId: string; role: "CUSTOMER" | "ADMIN" };
-
-export async function createSession(userId: string, role: Session["role"]) {
-  const token = await new SignJWT({ role })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE}s`)
-    .sign(secret());
+export async function createSession(userId: string, role: Role) {
   const jar = await cookies();
-  jar.set(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: MAX_AGE,
-  });
+  jar.set(SESSION_COOKIE, await signSession(userId, role), cookieOptions(role));
 }
 
 export async function destroySession() {
   const jar = await cookies();
-  jar.delete(COOKIE);
+  jar.delete(SESSION_COOKIE);
 }
 
-export async function getSession(): Promise<Session | null> {
+export async function getSession() {
   const jar = await cookies();
-  const token = jar.get(COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(token, secret());
-    if (!payload.sub) return null;
-    return { userId: payload.sub, role: payload.role === "ADMIN" ? "ADMIN" : "CUSTOMER" };
-  } catch {
-    return null;
-  }
+  return verifySession(jar.get(SESSION_COOKIE)?.value);
 }
 
 export async function getCurrentUser() {
