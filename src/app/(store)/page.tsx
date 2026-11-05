@@ -1,14 +1,22 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, RefreshCw, Smartphone, Truck } from "lucide-react";
 import { ProductImage } from "@/components/product-image";
 import { ProductRow } from "@/components/product-row";
 import { getCategories, listProducts } from "@/lib/catalog";
 import { store } from "@/lib/config";
-import { Money, Price } from "@/components/market";
+import { Money } from "@/components/market";
 import { getMarket } from "@/lib/market-server";
 
 
-const panelColors = ["#a3245a", "#f2b705", "#0b0b0b", "#f2b705", "#a3245a"];
+// Lifestyle photos for the hero strip (public/hero). Phones show the middle three.
+const heroPhotos = [
+  { src: "/hero/hero-2.webp", alt: "Retro white jersey with a line of classic kits", href: "/shop/retro", position: "center 30%" },
+  { src: "/hero/hero-1.webp", alt: "Yellow and green national team jersey styled with a skirt", href: "/shop/national-teams", position: "center 35%" },
+  { src: "/hero/hero-3.webp", alt: "Oversized red and green jersey in the studio", href: "/shop", position: "center 25%" },
+  { src: "/hero/hero-5.webp", alt: "Green and white striped jersey", href: "/shop", position: "center 20%" },
+  { src: "/hero/hero-4.webp", alt: "Classic white retro jersey at golden hour", href: "/shop/retro", position: "65% 40%" },
+];
 const collectionColors: Record<string, string> = {
   "national-teams": "#1d3f8f",
   "club-jerseys": "#a3245a",
@@ -25,8 +33,6 @@ export default async function HomePage() {
     getMarket(),
   ]);
   const inGhana = country === "GH";
-  const heroShirts = featured.slice(0, 5);
-  const spotlight = heroShirts[2] ?? heroShirts[0];
 
   return (
     <>
@@ -45,34 +51,31 @@ export default async function HomePage() {
       </section>
 
       <section className="mt-8 md:mt-10">
-        <div className="relative grid h-[360px] grid-cols-3 overflow-hidden sm:h-[440px] md:h-[540px] md:grid-cols-5">
-          {heroShirts.map((p, i) => (
+        <div className="relative grid h-[420px] grid-cols-3 overflow-hidden sm:h-[480px] md:h-[560px] md:grid-cols-5">
+          {heroPhotos.map((photo, i) => (
             <Link
-              key={p.id}
-              href={`/product/${p.slug}`}
-              className={`relative flex items-center justify-center ${i === 0 || i === 4 ? "hidden md:flex" : "flex"}`}
-              style={{ backgroundColor: panelColors[i] }}
+              key={photo.src}
+              href={photo.href}
+              aria-label={photo.alt}
+              className={`group relative overflow-hidden bg-ink ${i === 0 || i === 4 ? "hidden md:block" : "block"}`}
             >
-              <ProductImage
-                src={p.images[0]}
-                alt={p.name}
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                fill
                 priority={i === 2}
                 sizes="(min-width: 768px) 20vw, 33vw"
-                className={`!bg-transparent w-[92%] ${i === 2 ? "aspect-[4/5] scale-110" : "aspect-square opacity-95"}`}
+                className="object-cover transition duration-500 group-hover:scale-105"
+                style={{ objectPosition: photo.position }}
               />
             </Link>
           ))}
-          {spotlight && (
-            <Link
-              href={`/product/${spotlight.slug}`}
-              className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-16 text-white md:px-8 md:pb-6"
-            >
-              <span className="font-display text-2xl sm:text-3xl md:text-4xl">{spotlight.name}</span>
-              <span className="shrink-0 text-sm font-semibold">
-                <Price product={spotlight} />
-              </span>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-20 text-white md:px-8 md:pb-6">
+            <span className="font-display text-2xl sm:text-3xl md:text-4xl">Club. Country. Culture.</span>
+            <Link href="/shop" className="pointer-events-auto inline-flex shrink-0 items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline">
+              Shop all jerseys <ArrowRight className="h-4 w-4" />
             </Link>
-          )}
+          </div>
         </div>
       </section>
 
